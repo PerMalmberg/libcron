@@ -97,6 +97,9 @@ namespace libcron
             bool get_range(const std::string& s, T& low, T& high);
 
             template<typename T>
+            bool get_step(const std::string& s, uint8_t& start, uint8_t& step);
+
+            template<typename T>
             uint8_t value_of(T t)
             {
                 return static_cast<uint8_t>(t);
@@ -167,6 +170,8 @@ namespace libcron
 
         T left;
         T right;
+        uint8_t step_start;
+        uint8_t step;
 
         for (const auto& p : parts)
         {
@@ -204,6 +209,14 @@ namespace libcron
                     }
                 }
             }
+            else if (get_step<T>(p, step_start, step))
+            {
+                // Add from step_start to T::Last with a step of 'step'
+                for (auto v = step_start; v <= value_of(T::Last); v += step)
+                {
+                    res &= add_number(numbers, v);
+                }
+            }
             else
             {
                 res = false;
@@ -233,6 +246,33 @@ namespace libcron
             {
                 low = static_cast<T>(left);
                 high = static_cast<T>(right);
+                res = true;
+            }
+        }
+
+        return res;
+    }
+
+    template<typename T>
+    bool CronTime::get_step(const std::string& s, uint8_t& start, uint8_t& step)
+    {
+        bool res = false;
+
+        auto value_range = R"#((\d+)/(\d+))#";
+
+        std::regex range(value_range, std::regex_constants::ECMAScript);
+
+        std::smatch match;
+
+        if (std::regex_match(s.begin(), s.end(), match, range))
+        {
+            auto raw_start = std::stoi(match[1].str().c_str());
+            auto raw_step = std::stoi(match[2].str().c_str());
+
+            if(is_within_limits<T>(raw_start, raw_start) && raw_step > 0)
+            {
+                start = static_cast<uint8_t>(raw_start);
+                step = static_cast<uint8_t>(raw_step);
                 res = true;
             }
         }

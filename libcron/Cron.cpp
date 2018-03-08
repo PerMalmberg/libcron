@@ -1,8 +1,3 @@
-//
-// Created by permal on 3/8/18.
-//
-
-
 #include <functional>
 #include "Cron.h"
 

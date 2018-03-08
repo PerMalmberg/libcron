@@ -196,3 +196,31 @@ SCENARIO("Literal input")
         }
     }
 }
+
+SCENARIO("Using step syntax")
+{
+    GIVEN("Step inputs")
+    {
+        WHEN("Using literal ranges")
+        {
+            THEN("Range is valid")
+            {
+                auto c = CronTime::create("* * * * JAN/2 *");
+                REQUIRE(c.is_valid());
+                REQUIRE(has_value_range(c.months, 1, 1));
+                REQUIRE(has_value_range(c.months, 3, 3));
+                REQUIRE(has_value_range(c.months, 5, 5));
+                REQUIRE(has_value_range(c.months, 7, 7));
+                REQUIRE(has_value_range(c.months, 9, 9));
+                REQUIRE(has_value_range(c.months, 11, 11));
+                REQUIRE_FALSE(has_any_in_range(c.months, 2, 2));
+                REQUIRE_FALSE(has_any_in_range(c.months, 4, 4));
+                REQUIRE_FALSE(has_any_in_range(c.months, 6, 6));
+                REQUIRE_FALSE(has_any_in_range(c.months, 8, 8));
+                REQUIRE_FALSE(has_any_in_range(c.months, 10, 10));
+                REQUIRE_FALSE(has_any_in_range(c.months, 12, 12));
+            }
+
+        }
+    }
+}
