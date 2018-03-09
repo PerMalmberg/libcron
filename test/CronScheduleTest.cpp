@@ -53,14 +53,10 @@ SCENARIO("Calculating next runtime")
     REQUIRE(test("0 0 10 * FEB 1", DT(2017_y / 12 / 31, hours{23}, minutes{59}, seconds{58}), DT(year_month_day{2018_y/2/mon[1]}, hours{10})));
     REQUIRE(test("0 0 10 * FEB 6", DT(2017_y / 12 / 31, hours{23}, minutes{59}, seconds{58}), DT(year_month_day{2018_y/2/sat[1]}, hours{10})));
     REQUIRE(test("* * * 10-12 NOV *", DT(2018_y / 11 / 11, hours{10}, minutes{11}, seconds{12}), DT(year_month_day{2018_y/11/11}, hours{10}, minutes{11}, seconds{12})));
+    REQUIRE(test("0 0 * 31 APR,MAY *", DT(2017_y / 6 / 1), DT(2018_y / may / 31)));
 }
 
 SCENARIO("Leap year")
 {
     REQUIRE(test("0 0 * 29 FEB *", DT(2018_y / 1 / 1), DT(2020_y / 2 / 29)));
-}
-
-SCENARIO("Date that does not exist")
-{
-    //REQUIRE_FALSE(test("0 0 * 30 FEB *", DT(2018_y / 1 / 1), DT(2020_y / 2 / 29)));
 }

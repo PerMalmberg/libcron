@@ -101,6 +101,18 @@ namespace libcron
                 return static_cast<uint8_t>(t);
             }
 
+            template<typename T>
+            static bool has_any_in_range(const std::set<T>& set, uint8_t low, uint8_t high)
+            {
+                bool found = false;
+                for (auto i = low; !found && i <= high; ++i)
+                {
+                    found |= set.find(static_cast<T>(i)) != set.end();
+                }
+
+                return found;
+            }
+
         private:
 
             void parse(const std::string& cron_expression);
@@ -133,6 +145,8 @@ namespace libcron
             bool is_number(const std::string& s);
 
             bool is_between(int32_t value, int32_t low_limit, int32_t high_limit);
+
+            bool validate_date_vs_months() const;
 
             std::set<Seconds> seconds{};
             std::set<Minutes> minutes{};
