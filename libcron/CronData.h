@@ -1,11 +1,10 @@
 #pragma once
 
 #include <set>
-#include "TimeTypes.h"
 #include <regex>
-#include <chrono>
 #include <string>
 #include <vector>
+#include "TimeTypes.h"
 
 namespace libcron
 {
@@ -96,6 +95,12 @@ namespace libcron
                 return day_of_week;
             }
 
+            template<typename T>
+            static uint8_t value_of(T t)
+            {
+                return static_cast<uint8_t>(t);
+            }
+
         private:
 
             void parse(const std::string& cron_expression);
@@ -122,12 +127,6 @@ namespace libcron
 
             template<typename T>
             bool get_step(const std::string& s, uint8_t& start, uint8_t& step);
-
-            template<typename T>
-            uint8_t value_of(T t)
-            {
-                return static_cast<uint8_t>(t);
-            }
 
             std::vector<std::string> split(const std::string& s, char token);
 

@@ -1,11 +1,13 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 
 #include <catch.hpp>
-
+#include <date.h>
 #include <libcron/Cron.h>
 #include <libcron/CronData.h>
 
 using namespace libcron;
+using namespace date;
+using namespace std::chrono;
 
 template<typename T>
 bool has_value_range(const std::set<T>& set, uint8_t low, uint8_t high)
@@ -231,18 +233,30 @@ SCENARIO("Calculating next runtime")
     {
         auto c = CronData::create("0 0 * * * *");
         REQUIRE(c.is_valid());
+        CronSchedule sched(c);
 
         WHEN("Start time is midnight")
         {
-//            std::chrono::system_clock::time_point run_time = c.calculate_from(midnight);
-//            THEN("Next runtime is 01:00")
-//            {
-//                auto t = std::chrono::system_clock::to_time_t(run_time);
+            sys_days midnight = 2010_y/1/1;
+            std::chrono::system_clock::time_point run_time = sched.calculate_from(midnight);
+
+            THEN("Next runtime is 01:00 of the same date")
+            {
+                auto t = CronSchedule::to_calendar_time(run_time);
+                REQUIRE(t.year == 2010);
+                REQUIRE(t.month == 1);
+                REQUIRE(t.day == 1);
+                REQUIRE(t.hour == 1);
+                REQUIRE(t.min == 0);
+                REQUIRE(t.sec == 0);
+
+
+            //    auto t = std::chrono::system_clock::to_time_t(run_time);
 //                REQUIRE(t.get_seconds() == 0);
 //                REQUIRE(t.minute == 0);
 //                REQUIRE(t.hour == 1);
 //                REQUIRE(t.)
-//            }
+            }
         }
 
 

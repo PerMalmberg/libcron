@@ -2,25 +2,30 @@
 
 #include <functional>
 #include "CronData.h"
+#include "CronSchedule.h"
 
 namespace libcron
 {
     class Task
     {
-    public:
+        public:
 
-        Task(CronData time, std::function<void()> task)
-                : time(std::move(time)), task(std::move(task))
-        {
-        }
+            Task(CronSchedule schedule, std::function<void()> task)
+                    : schedule(std::move(schedule))//, task(std::move(task))
+            {
+            }
 
-        bool operator<(const Task& other) const
-        {
-            return false;
-        }
+            Task(const Task&) = default;
 
-    private:
-        CronData time{};
-        std::function<void()> task;
+            Task& operator=(const Task&) = default;
+
+            bool operator<(const Task& other) const
+            {
+                return false;
+            }
+
+        private:
+            CronSchedule schedule;
+            //std::function<void()> task;
     };
 }

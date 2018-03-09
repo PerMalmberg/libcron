@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -fsanitize=address -las
 include_directories(
         externals/Catch2/single_include/
         ..
+        ../libcron/externals/date
 )
 
 add_executable(

@@ -7,7 +7,7 @@ bool libcron::Cron::add_schedule(const std::string &schedule, std::function<void
     bool res = cron.is_valid();
     if (res)
     {
-        items.emplace(Task(cron, std::move(work)));
+        items.emplace(Task(CronSchedule(cron), std::move(work)));
     }
 
     return res;
