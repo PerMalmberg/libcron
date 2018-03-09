@@ -249,15 +249,30 @@ SCENARIO("Calculating next runtime")
                 REQUIRE(t.hour == 1);
                 REQUIRE(t.min == 0);
                 REQUIRE(t.sec == 0);
-
-
-            //    auto t = std::chrono::system_clock::to_time_t(run_time);
-//                REQUIRE(t.get_seconds() == 0);
-//                REQUIRE(t.minute == 0);
-//                REQUIRE(t.hour == 1);
-//                REQUIRE(t.)
             }
         }
+        AND_WHEN("Start time 05:00:00")
+        {
+            sys_days midnight = 2010_y/1/1;
+            system_clock::time_point five = midnight;
+            five += hours{5};
+
+            auto t2 = CronSchedule::to_calendar_time(five);
+
+            std::chrono::system_clock::time_point run_time = sched.calculate_from(five);
+
+            THEN("Next runtime is 06:00 of the same date")
+            {
+                auto t = CronSchedule::to_calendar_time(run_time);
+                REQUIRE(t.year == 2010);
+                REQUIRE(t.month == 1);
+                REQUIRE(t.day == 1);
+                REQUIRE(t.hour == 6);
+                REQUIRE(t.min == 0);
+                REQUIRE(t.sec == 0);
+            }
+        }
+
 
 
     }
