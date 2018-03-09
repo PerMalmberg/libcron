@@ -3,7 +3,7 @@
 #include <catch.hpp>
 
 #include <libcron/Cron.h>
-#include <libcron/CronTime.h>
+#include <libcron/CronData.h>
 
 using namespace libcron;
 
@@ -39,68 +39,68 @@ SCENARIO("Numerical inputs")
         {
             THEN("All parts are filled")
             {
-                auto c = CronTime::create("* * * * * *");
+                auto c = CronData::create("* * * * * *");
                 REQUIRE(c.is_valid());
-                REQUIRE(c.seconds.size() == 60);
-                REQUIRE(has_value_range(c.seconds, 0, 59));
-                REQUIRE(c.minutes.size() == 60);
-                REQUIRE(has_value_range(c.minutes, 0, 59));
-                REQUIRE(c.hours.size() == 24);
-                REQUIRE(has_value_range(c.hours, 0, 23));
-                REQUIRE(c.day_of_month.size() == 31);
-                REQUIRE(has_value_range(c.day_of_month, 1, 31));
-                REQUIRE(c.day_of_week.size() == 7);
-                REQUIRE(has_value_range(c.day_of_week, 0, 6));
+                REQUIRE(c.get_seconds().size() == 60);
+                REQUIRE(has_value_range(c.get_seconds(), 0, 59));
+                REQUIRE(c.get_minutes().size() == 60);
+                REQUIRE(has_value_range(c.get_minutes(), 0, 59));
+                REQUIRE(c.get_hours().size() == 24);
+                REQUIRE(has_value_range(c.get_hours(), 0, 23));
+                REQUIRE(c.get_day_of_month().size() == 31);
+                REQUIRE(has_value_range(c.get_day_of_month(), 1, 31));
+                REQUIRE(c.get_day_of_week().size() == 7);
+                REQUIRE(has_value_range(c.get_day_of_week(), 0, 6));
             }
         }
         AND_WHEN("Using full forward range")
         {
             THEN("Ranges are correct")
             {
-                auto c = CronTime::create("* 0-59 * * * *");
+                auto c = CronData::create("* 0-59 * * * *");
                 REQUIRE(c.is_valid());
-                REQUIRE(c.seconds.size() == 60);
-                REQUIRE(c.minutes.size() == 60);
-                REQUIRE(c.hours.size() == 24);
-                REQUIRE(c.day_of_month.size() == 31);
-                REQUIRE(c.day_of_week.size() == 7);
-                REQUIRE(has_value_range(c.seconds, 0, 59));
+                REQUIRE(c.get_seconds().size() == 60);
+                REQUIRE(c.get_minutes().size() == 60);
+                REQUIRE(c.get_hours().size() == 24);
+                REQUIRE(c.get_day_of_month().size() == 31);
+                REQUIRE(c.get_day_of_week().size() == 7);
+                REQUIRE(has_value_range(c.get_seconds(), 0, 59));
             }
         }
         AND_WHEN("Using partial range")
         {
             THEN("Ranges are correct")
             {
-                auto c = CronTime::create("* * * 20-30 * *");
+                auto c = CronData::create("* * * 20-30 * *");
                 REQUIRE(c.is_valid());
-                REQUIRE(c.seconds.size() == 60);
-                REQUIRE(c.minutes.size() == 60);
-                REQUIRE(c.hours.size() == 24);
-                REQUIRE(c.day_of_month.size() == 11);
-                REQUIRE(c.day_of_week.size() == 7);
-                REQUIRE(has_value_range(c.day_of_month, 20, 30));
+                REQUIRE(c.get_seconds().size() == 60);
+                REQUIRE(c.get_minutes().size() == 60);
+                REQUIRE(c.get_hours().size() == 24);
+                REQUIRE(c.get_day_of_month().size() == 11);
+                REQUIRE(c.get_day_of_week().size() == 7);
+                REQUIRE(has_value_range(c.get_day_of_month(), 20, 30));
             }
         }
         AND_WHEN("Using backward range")
         {
             THEN("Number of hours are correct")
             {
-                auto c = CronTime::create("* * 20-5 * * *");
+                auto c = CronData::create("* * 20-5 * * *");
                 REQUIRE(c.is_valid());
-                REQUIRE(c.hours.size() == 10);
-                REQUIRE(c.hours.find(Hours::First) != c.hours.end());
+                REQUIRE(c.get_hours().size() == 10);
+                REQUIRE(c.get_hours().find(Hours::First) != c.get_hours().end());
             }
         }
         AND_WHEN("Using various ranges")
         {
             THEN("Validation succeeds")
             {
-                REQUIRE(CronTime::create("0-59 * * * * *").is_valid());
-                REQUIRE(CronTime::create("* 0-59 * * * *").is_valid());
-                REQUIRE(CronTime::create("* * 0-23 * * *").is_valid());
-                REQUIRE(CronTime::create("* * * 1-31 * *").is_valid());
-                REQUIRE(CronTime::create("* * * * 1-12 *").is_valid());
-                REQUIRE(CronTime::create("* * * * * 0-6").is_valid());
+                REQUIRE(CronData::create("0-59 * * * * *").is_valid());
+                REQUIRE(CronData::create("* 0-59 * * * *").is_valid());
+                REQUIRE(CronData::create("* * 0-23 * * *").is_valid());
+                REQUIRE(CronData::create("* * * 1-31 * *").is_valid());
+                REQUIRE(CronData::create("* * * * 1-12 *").is_valid());
+                REQUIRE(CronData::create("* * * * * 0-6").is_valid());
             }
         }
     }
@@ -110,22 +110,22 @@ SCENARIO("Numerical inputs")
         {
             THEN("Validation fails")
             {
-                REQUIRE_FALSE(CronTime::create("").is_valid());
-                REQUIRE_FALSE(CronTime::create("-").is_valid());
-                REQUIRE_FALSE(CronTime::create("* ").is_valid());
-                REQUIRE_FALSE(CronTime::create("* 0-60 * * * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * 0-25 * * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * 1-32 * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * * 1-13 *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * * * 0-7").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * 0-31 * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * * 0-12 *").is_valid());
-                REQUIRE_FALSE(CronTime::create("60 * * * * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* 60 * * * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * 25 * * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * 32 * *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * * 13 *").is_valid());
-                REQUIRE_FALSE(CronTime::create("* * * * * 7").is_valid());
+                REQUIRE_FALSE(CronData::create("").is_valid());
+                REQUIRE_FALSE(CronData::create("-").is_valid());
+                REQUIRE_FALSE(CronData::create("* ").is_valid());
+                REQUIRE_FALSE(CronData::create("* 0-60 * * * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * 0-25 * * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * 1-32 * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * 1-13 *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * * 0-7").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * 0-31 * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * 0-12 *").is_valid());
+                REQUIRE_FALSE(CronData::create("60 * * * * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* 60 * * * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * 25 * * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * 32 * *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * 13 *").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * * 7").is_valid());
             }
         }
     }
@@ -139,59 +139,59 @@ SCENARIO("Literal input")
         {
             THEN("Range is valid")
             {
-                auto c = CronTime::create("* * * * JAN-MAR *");
+                auto c = CronData::create("* * * * JAN-MAR *");
                 REQUIRE(c.is_valid());
-                REQUIRE(has_value_range(c.months, 1, 3));
+                REQUIRE(has_value_range(c.get_months(), 1, 3));
             }
             AND_THEN("Range is valid")
             {
-                auto c = CronTime::create("* * * * * SUN-FRI");
+                auto c = CronData::create("* * * * * SUN-FRI");
                 REQUIRE(c.is_valid());
-                REQUIRE(has_value_range(c.day_of_week, 0, 5));
+                REQUIRE(has_value_range(c.get_day_of_week(), 0, 5));
             }
         }
         AND_WHEN("Using both range and specific month")
         {
             THEN("Range is valid")
             {
-                auto c = CronTime::create("* * * * JAN-MAR,DEC *");
+                auto c = CronData::create("* * * * JAN-MAR,DEC *");
                 REQUIRE(c.is_valid());
-                REQUIRE(has_value_range(c.months, 1, 3));
-                REQUIRE_FALSE(has_any_in_range(c.months, 4, 11));
-                REQUIRE(has_value_range(c.months, 12, 12));
+                REQUIRE(has_value_range(c.get_months(), 1, 3));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 4, 11));
+                REQUIRE(has_value_range(c.get_months(), 12, 12));
             }
             AND_THEN("Range is valid")
             {
-                auto c = CronTime::create("* * * * JAN-MAR,DEC FRI,MON,THU");
+                auto c = CronData::create("* * * * JAN-MAR,DEC FRI,MON,THU");
                 REQUIRE(c.is_valid());
-                REQUIRE(has_value_range(c.months, 1, 3));
-                REQUIRE_FALSE(has_any_in_range(c.months, 4, 11));
-                REQUIRE(has_value_range(c.months, 12, 12));
-                REQUIRE(has_value_range(c.day_of_week, 5, 5));
-                REQUIRE(has_value_range(c.day_of_week, 1, 1));
-                REQUIRE(has_value_range(c.day_of_week, 4, 4));
-                REQUIRE_FALSE(has_any_in_range(c.day_of_week, 0, 0));
-                REQUIRE_FALSE(has_any_in_range(c.day_of_week, 2, 3));
-                REQUIRE_FALSE(has_any_in_range(c.day_of_week, 6, 6));
+                REQUIRE(has_value_range(c.get_months(), 1, 3));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 4, 11));
+                REQUIRE(has_value_range(c.get_months(), 12, 12));
+                REQUIRE(has_value_range(c.get_day_of_week(), 5, 5));
+                REQUIRE(has_value_range(c.get_day_of_week(), 1, 1));
+                REQUIRE(has_value_range(c.get_day_of_week(), 4, 4));
+                REQUIRE_FALSE(has_any_in_range(c.get_day_of_week(), 0, 0));
+                REQUIRE_FALSE(has_any_in_range(c.get_day_of_week(), 2, 3));
+                REQUIRE_FALSE(has_any_in_range(c.get_day_of_week(), 6, 6));
             }
         }
         AND_WHEN("Using backward range")
         {
             THEN("Range is valid")
             {
-                auto c = CronTime::create("* * * * APR-JAN *");
+                auto c = CronData::create("* * * * APR-JAN *");
                 REQUIRE(c.is_valid());
-                REQUIRE(has_value_range(c.months, 4, 12));
-                REQUIRE(has_value_range(c.months, 1, 1));
-                REQUIRE_FALSE(has_any_in_range(c.months, 2, 3));
+                REQUIRE(has_value_range(c.get_months(), 4, 12));
+                REQUIRE(has_value_range(c.get_months(), 1, 1));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 2, 3));
             }
             AND_THEN("Range is valid")
             {
-                auto c = CronTime::create("* * * * * sat-tue,wed");
+                auto c = CronData::create("* * * * * sat-tue,wed");
                 REQUIRE(c.is_valid());
-                REQUIRE(has_value_range(c.day_of_week, 6, 6)); // Has saturday
-                REQUIRE(has_value_range(c.day_of_week, 0, 3)); // Has sun, mon, tue, wed
-                REQUIRE_FALSE(has_any_in_range(c.day_of_week, 4, 5)); // Does not have thu or fri.
+                REQUIRE(has_value_range(c.get_day_of_week(), 6, 6)); // Has saturday
+                REQUIRE(has_value_range(c.get_day_of_week(), 0, 3)); // Has sun, mon, tue, wed
+                REQUIRE_FALSE(has_any_in_range(c.get_day_of_week(), 4, 5)); // Does not have thu or fri.
             }
         }
     }
@@ -205,22 +205,46 @@ SCENARIO("Using step syntax")
         {
             THEN("Range is valid")
             {
-                auto c = CronTime::create("* * * * JAN/2 *");
+                auto c = CronData::create("* * * * JAN/2 *");
                 REQUIRE(c.is_valid());
-                REQUIRE(has_value_range(c.months, 1, 1));
-                REQUIRE(has_value_range(c.months, 3, 3));
-                REQUIRE(has_value_range(c.months, 5, 5));
-                REQUIRE(has_value_range(c.months, 7, 7));
-                REQUIRE(has_value_range(c.months, 9, 9));
-                REQUIRE(has_value_range(c.months, 11, 11));
-                REQUIRE_FALSE(has_any_in_range(c.months, 2, 2));
-                REQUIRE_FALSE(has_any_in_range(c.months, 4, 4));
-                REQUIRE_FALSE(has_any_in_range(c.months, 6, 6));
-                REQUIRE_FALSE(has_any_in_range(c.months, 8, 8));
-                REQUIRE_FALSE(has_any_in_range(c.months, 10, 10));
-                REQUIRE_FALSE(has_any_in_range(c.months, 12, 12));
+                REQUIRE(has_value_range(c.get_months(), 1, 1));
+                REQUIRE(has_value_range(c.get_months(), 3, 3));
+                REQUIRE(has_value_range(c.get_months(), 5, 5));
+                REQUIRE(has_value_range(c.get_months(), 7, 7));
+                REQUIRE(has_value_range(c.get_months(), 9, 9));
+                REQUIRE(has_value_range(c.get_months(), 11, 11));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 2, 2));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 4, 4));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 6, 6));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 8, 8));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 10, 10));
+                REQUIRE_FALSE(has_any_in_range(c.get_months(), 12, 12));
             }
 
         }
+    }
+}
+
+SCENARIO("Calculating next runtime")
+{
+    GIVEN("An item schedule for the top of every hour")
+    {
+        auto c = CronData::create("0 0 * * * *");
+        REQUIRE(c.is_valid());
+
+        WHEN("Start time is midnight")
+        {
+//            std::chrono::system_clock::time_point run_time = c.calculate_from(midnight);
+//            THEN("Next runtime is 01:00")
+//            {
+//                auto t = std::chrono::system_clock::to_time_t(run_time);
+//                REQUIRE(t.get_seconds() == 0);
+//                REQUIRE(t.minute == 0);
+//                REQUIRE(t.hour == 1);
+//                REQUIRE(t.)
+//            }
+        }
+
+
     }
 }

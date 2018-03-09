@@ -10,6 +10,9 @@
 namespace libcron
 {
     /*
+        This class parses strings in the format specified below and holds the resulting allowed values
+        in its internal sets.
+
         Cron format, 6 parts:
 
        ┌──────────────seconds (0 - 59)
@@ -51,27 +54,49 @@ namespace libcron
 
      */
 
-    class CronTime
+    class CronData
     {
         public:
-            static CronTime create(const std::string& cron_expression);
+            static CronData create(const std::string& cron_expression);
 
-            CronTime();
-
-
-            bool operator<(const CronTime& other) const
-            {
-                return next_run_time < other.next_run_time;
-            }
+            CronData();
 
             bool is_valid() const
             {
                 return valid;
             }
 
-#ifndef EXPOSE_PRIVATE_PARTS
-            private:
-#endif
+            const std::set<Seconds>& get_seconds() const
+            {
+                return seconds;
+            }
+
+            const std::set<Minutes>& get_minutes() const
+            {
+                return minutes;
+            }
+
+            const std::set<Hours>& get_hours() const
+            {
+                return hours;
+            }
+
+            const std::set<DayOfMonth>& get_day_of_month() const
+            {
+                return day_of_month;
+            }
+
+            const std::set<Months>& get_months() const
+            {
+                return months;
+            }
+
+            const std::set<DayOfWeek>& get_day_of_week() const
+            {
+                return day_of_week;
+            }
+
+        private:
 
             void parse(const std::string& cron_expression);
 
@@ -110,7 +135,6 @@ namespace libcron
 
             bool is_between(int32_t value, int32_t low_limit, int32_t high_limit);
 
-            std::chrono::system_clock::time_point next_run_time{};
             std::set<Seconds> seconds{};
             std::set<Minutes> minutes{};
             std::set<Hours> hours{};
@@ -127,7 +151,7 @@ namespace libcron
     };
 
     template<typename T>
-    bool CronTime::validate_numeric(const std::string& s, std::set<T>& numbers)
+    bool CronData::validate_numeric(const std::string& s, std::set<T>& numbers)
     {
         std::vector<std::string> parts = split(s, ',');
 
@@ -135,7 +159,7 @@ namespace libcron
     }
 
     template<typename T>
-    bool CronTime::validate_literal(const std::string& s,
+    bool CronData::validate_literal(const std::string& s,
                                     std::set<T>& numbers,
                                     const std::vector<std::string>& names)
     {
@@ -164,7 +188,7 @@ namespace libcron
     }
 
     template<typename T>
-    bool CronTime::process_parts(const std::vector<std::string>& parts, std::set<T>& numbers)
+    bool CronData::process_parts(const std::vector<std::string>& parts, std::set<T>& numbers)
     {
         bool res = true;
 
@@ -227,7 +251,7 @@ namespace libcron
     }
 
     template<typename T>
-    bool CronTime::get_range(const std::string& s, T& low, T& high)
+    bool CronData::get_range(const std::string& s, T& low, T& high)
     {
         bool res = false;
 
@@ -254,7 +278,7 @@ namespace libcron
     }
 
     template<typename T>
-    bool CronTime::get_step(const std::string& s, uint8_t& start, uint8_t& step)
+    bool CronData::get_step(const std::string& s, uint8_t& start, uint8_t& step)
     {
         bool res = false;
 
@@ -269,7 +293,7 @@ namespace libcron
             auto raw_start = std::stoi(match[1].str().c_str());
             auto raw_step = std::stoi(match[2].str().c_str());
 
-            if(is_within_limits<T>(raw_start, raw_start) && raw_step > 0)
+            if (is_within_limits<T>(raw_start, raw_start) && raw_step > 0)
             {
                 start = static_cast<uint8_t>(raw_start);
                 step = static_cast<uint8_t>(raw_step);
@@ -281,7 +305,7 @@ namespace libcron
     }
 
     template<typename T>
-    void CronTime::add_full_range(std::set<T>& set)
+    void CronData::add_full_range(std::set<T>& set)
     {
         for (auto v = value_of(T::First); v <= value_of(T::Last); ++v)
         {
@@ -293,7 +317,7 @@ namespace libcron
     }
 
     template<typename T>
-    bool CronTime::add_number(std::set<T>& set, int32_t number)
+    bool CronData::add_number(std::set<T>& set, int32_t number)
     {
         bool res = true;
 
@@ -315,7 +339,7 @@ namespace libcron
     }
 
     template<typename T>
-    bool CronTime::is_within_limits(int32_t low, int32_t high)
+    bool CronData::is_within_limits(int32_t low, int32_t high)
     {
         return is_between(low, value_of(T::First), value_of(T::Last))
                && is_between(high, value_of(T::First), value_of(T::Last));

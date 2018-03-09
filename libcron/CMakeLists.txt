@@ -4,6 +4,8 @@ project(libcron)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -fsanitize=address")
 
+include_directories(externals/date)
+
 add_library(${PROJECT_NAME}
         Cron.h
-        Cron.cpp Task.h CronTime.h TimeTypes.h CronTime.cpp)
+        Cron.cpp Task.h CronData.h TimeTypes.h CronData.cpp)

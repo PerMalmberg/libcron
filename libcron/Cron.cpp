@@ -3,7 +3,7 @@
 
 bool libcron::Cron::add_schedule(const std::string &schedule, std::function<void()> work)
 {
-    auto cron = CronTime::create(schedule);
+    auto cron = CronData::create(schedule);
     bool res = cron.is_valid();
     if (res)
     {

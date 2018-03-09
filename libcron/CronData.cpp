@@ -1,23 +1,23 @@
-#include "CronTime.h"
+#include "CronData.h"
 
 namespace libcron
 {
 
-    CronTime CronTime::create(const std::string& cron_expression)
+    CronData CronData::create(const std::string& cron_expression)
     {
-        CronTime c;
+        CronData c;
         c.parse(cron_expression);
 
         return std::move(c);
     }
 
-    CronTime::CronTime()
+    CronData::CronData()
             : month_names({"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}),
               day_names({"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"})
     {
     }
 
-    void CronTime::parse(const std::string& cron_expression)
+    void CronData::parse(const std::string& cron_expression)
     {
         // First, split on white-space. We expect six parts.
         std::regex split{R"#(^\s*(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s*$)#",
@@ -36,7 +36,7 @@ namespace libcron
         }
     }
 
-    std::vector<std::string> CronTime::split(const std::string& s, char token)
+    std::vector<std::string> CronData::split(const std::string& s, char token)
     {
         std::vector<std::string> res;
 
@@ -53,7 +53,7 @@ namespace libcron
         return res;
     }
 
-    bool CronTime::is_number(const std::string& s)
+    bool CronData::is_number(const std::string& s)
     {
         // Find any character that isn't a number.
         return !s.empty()
@@ -62,7 +62,7 @@ namespace libcron
                                { return !std::isdigit(c); }) == s.end();
     }
 
-    bool CronTime::is_between(int32_t value, int32_t low_limit, int32_t high_limt)
+    bool CronData::is_between(int32_t value, int32_t low_limit, int32_t high_limt)
     {
         return value >= low_limit && value <= high_limt;
     }

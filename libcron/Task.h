@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include "CronTime.h"
+#include "CronData.h"
 
 namespace libcron
 {
@@ -9,18 +9,18 @@ namespace libcron
     {
     public:
 
-        Task(CronTime time, std::function<void()> task)
+        Task(CronData time, std::function<void()> task)
                 : time(std::move(time)), task(std::move(task))
         {
         }
 
         bool operator<(const Task& other) const
         {
-            return time < other.time;
+            return false;
         }
 
     private:
-        CronTime time{};
+        CronData time{};
         std::function<void()> task;
     };
 }
