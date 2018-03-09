@@ -31,10 +31,8 @@ namespace libcron
             valid &= validate_numeric<Minutes>(match[2], minutes);
             valid &= validate_numeric<Hours>(match[3], hours);
             valid &= validate_numeric<DayOfMonth>(match[4], day_of_month);
-            valid &= validate_numeric<Months>(match[5], months)
-                     || validate_literal<Months>(match[5], months, month_names, 1);
-            valid &= validate_numeric<DayOfWeek>(match[6], day_of_week)
-                     || validate_literal<DayOfWeek>(match[6], day_of_week, day_names, 0);
+            valid &= validate_literal<Months>(match[5], months, month_names, 1);
+            valid &= validate_literal<DayOfWeek>(match[6], day_of_week, day_names, 0);
         }
     }
 
