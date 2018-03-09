@@ -81,8 +81,7 @@ namespace libcron
             template<typename T>
             bool validate_literal(const std::string& s,
                                   std::set<T>& numbers,
-                                  const std::vector<std::string>& names,
-                                  int32_t name_offset);
+                                  const std::vector<std::string>& names);
 
             template<typename T>
             bool process_parts(const std::vector<std::string>& parts, std::set<T>& numbers);
@@ -138,10 +137,11 @@ namespace libcron
     template<typename T>
     bool CronTime::validate_literal(const std::string& s,
                                     std::set<T>& numbers,
-                                    const std::vector<std::string>& names,
-                                    int32_t name_offset)
+                                    const std::vector<std::string>& names)
     {
         std::vector<std::string> parts = split(s, ',');
+
+        auto value_of_first_name = value_of(T::First);
 
         // Replace each found name with the corresponding value.
         for (const auto& name : names)
@@ -151,12 +151,12 @@ namespace libcron
             {
                 std::string replaced;
                 std::regex_replace(std::back_inserter(replaced), parts[i].begin(), parts[i].end(), m,
-                                   std::to_string(name_offset));
+                                   std::to_string(value_of_first_name));
 
                 parts[i] = replaced;
             }
 
-            name_offset++;
+            value_of_first_name++;
         }
 
         return process_parts(parts, numbers);
