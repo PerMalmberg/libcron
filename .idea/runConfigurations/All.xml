@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="All" type="CMakeCatchTestRunConfigurationType" factoryName="Catch Test" singleton="true" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Project" TARGET_NAME="cron_test" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Project" RUN_TARGET_NAME="cron_test" TEST_MODE="SUITE_TEST">
+    <envs />
+    <method />
+  </configuration>
+</component>
