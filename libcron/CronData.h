@@ -295,7 +295,7 @@ namespace libcron
     {
         bool res = false;
 
-        auto value_range = R"#((\d+)/(\d+))#";
+        auto value_range = R"#((\d+|\*)/(\d+))#";
 
         std::regex range(value_range, std::regex_constants::ECMAScript);
 
@@ -303,7 +303,16 @@ namespace libcron
 
         if (std::regex_match(s.begin(), s.end(), match, range))
         {
-            auto raw_start = std::stoi(match[1].str().c_str());
+            int raw_start;
+            if(match[1].str() == "*")
+            {
+                raw_start = value_of(T::First);
+            }
+            else
+            {
+                raw_start = std::stoi(match[1].str().c_str());
+            }
+
             auto raw_step = std::stoi(match[2].str().c_str());
 
             if (is_within_limits<T>(raw_start, raw_start) && raw_step > 0)

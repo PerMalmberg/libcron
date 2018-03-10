@@ -6,17 +6,17 @@ using namespace date;
 namespace libcron
 {
 
-    std::chrono::system_clock::time_point
-    CronSchedule::calculate_from(const std::chrono::system_clock::time_point& from)
+    std::tuple<bool, std::chrono::system_clock::time_point>
+    CronSchedule::calculate_from(const std::chrono::system_clock::time_point& from) const
     {
-        //auto time_part = from - date::floor<days>(from);
-        auto curr = from;// - time_part;
-        //auto dt = to_calendar_time(curr);
+        auto curr = from;
 
         bool done = false;
+        auto max_iterations = std::numeric_limits<uint16_t>::max();
 
-        while (!done)
+        while (!done && --max_iterations > 0)
         {
+            bool date_changed = false;
             year_month_day ymd = date::floor<days>(curr);
 
             // Add months until one of the allowed days are found, or stay at the current one.
@@ -25,7 +25,7 @@ namespace libcron
                 auto next_month = ymd + months{1};
                 sys_days s = next_month.year() / next_month.month() / 1;
                 curr = s;
-                continue;
+                date_changed = true;
             }
                 // If all days are allowed, then the 'day of week' takes precedence, which also means that
                 // day of week only is ignored when specific days of months are specified.
@@ -38,7 +38,7 @@ namespace libcron
                     sys_days s = ymd;
                     curr = s;
                     curr += days{1};
-                    continue;
+                    date_changed = true;
                 }
             }
             else
@@ -52,33 +52,35 @@ namespace libcron
                     sys_days s = ymd;
                     curr = s;
                     curr += days{1};
-                    continue;
+                    date_changed = true;
                 }
             }
 
-            //curr += time_part;
-            auto date_time = to_calendar_time(curr);
-            if (data.get_hours().find(static_cast<Hours>(date_time.hour)) == data.get_hours().end())
+            if(!date_changed)
             {
-                curr += hours{1};
-                curr -= minutes{date_time.min};
-                curr -= seconds{date_time.sec};
-            }
-            else if (data.get_minutes().find(static_cast<Minutes >(date_time.min)) == data.get_minutes().end())
-            {
-                curr += minutes{1};
-                curr -= seconds{date_time.sec};
-            }
-            else if (data.get_seconds().find(static_cast<Seconds>(date_time.sec)) == data.get_seconds().end())
-            {
-                curr += seconds{1};
-            }
-            else
-            {
-                done = true;
+                auto date_time = to_calendar_time(curr);
+                if (data.get_hours().find(static_cast<Hours>(date_time.hour)) == data.get_hours().end())
+                {
+                    curr += hours{1};
+                    curr -= minutes{date_time.min};
+                    curr -= seconds{date_time.sec};
+                }
+                else if (data.get_minutes().find(static_cast<Minutes >(date_time.min)) == data.get_minutes().end())
+                {
+                    curr += minutes{1};
+                    curr -= seconds{date_time.sec};
+                }
+                else if (data.get_seconds().find(static_cast<Seconds>(date_time.sec)) == data.get_seconds().end())
+                {
+                    curr += seconds{1};
+                }
+                else
+                {
+                    done = true;
+                }
             }
         }
 
-        return curr;
+        return std::make_tuple(max_iterations > 0, max_iterations > 0 ? curr : system_clock::now());
     }
 }

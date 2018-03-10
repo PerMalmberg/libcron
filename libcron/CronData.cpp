@@ -78,9 +78,9 @@ namespace libcron
         bool res = true;
 
         // Verify that the available dates are possible based on the given months
-        if (months.find(static_cast<Months>(2)) != months.end())
+        if (months.size() == 1 && months.find(static_cast<Months>(2)) != months.end())
         {
-            // February allowed, make sure that the allowed date(s) includes 29 and below.
+            // Only february allowed, make sure that the allowed date(s) includes 29 and below.
             res = has_any_in_range(day_of_month, 1, 29);
         }
 
@@ -102,8 +102,7 @@ namespace libcron
                 res = false;
                 for(size_t i = 0; !res && i < months_with_31.size(); ++i)
                 {
-                    auto month = months_with_31[i];
-                    res = months.find(static_cast<Months>(month)) != months.end();
+                    res = months.find(static_cast<Months>(months_with_31[i])) != months.end();
                 }
             }
         }
