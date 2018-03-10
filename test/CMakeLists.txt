@@ -12,7 +12,7 @@ include_directories(
 
 add_executable(
         ${PROJECT_NAME}
-        test.cpp
-        CronScheduleTest.cpp)
+        CronDataTest.cpp
+        CronScheduleTest.cpp CronTest.cpp)
 
 target_link_libraries(${PROJECT_NAME} libcron)

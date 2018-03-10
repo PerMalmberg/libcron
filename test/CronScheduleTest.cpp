@@ -178,6 +178,6 @@ SCENARIO("Multiple calculations")
 
 SCENARIO("Unable to calculate time point")
 {
-    // TODO: Find a
+    // TODO: Find a schedule that is unsolvable.
     //REQUIRE_FALSE(test("0 0 0 1 1 0", DT(2021_y / 12 / 15), DT(2022_y / 1 / 1)));
 }

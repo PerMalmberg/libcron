@@ -10,8 +10,8 @@ namespace libcron
     class CronSchedule
     {
         public:
-            explicit CronSchedule(CronData data)
-                    : data(std::move(data))
+            explicit CronSchedule(CronData& data)
+                    : data(data)
             {
             }
 
@@ -36,7 +36,6 @@ namespace libcron
 
                 return dt;
             }
-
 
         private:
             CronData data;
