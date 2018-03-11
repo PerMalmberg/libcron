@@ -6,9 +6,9 @@
 using namespace libcron;
 using namespace std::chrono;
 
-std::string create_schedule_expiring_in(std::shared_ptr<ICronClock> clock, hours h, minutes m, seconds s)
+std::string create_schedule_expiring_in(std::chrono::system_clock::time_point now, hours h, minutes m, seconds s)
 {
-    auto now = clock->now() + h + m + s;
+    now = now + h + m + s;
     auto dt = CronSchedule::to_calendar_time(now);
 
     std::string res{};
@@ -66,7 +66,7 @@ SCENARIO("Adding a task that expires in the future")
         auto expired = false;
 
         Cron c;
-        REQUIRE(c.add_schedule("A task", create_schedule_expiring_in(c.get_clock(), hours{0}, minutes{0}, seconds{3}),
+        REQUIRE(c.add_schedule("A task", create_schedule_expiring_in(c.get_clock()->now(), hours{0}, minutes{0}, seconds{3}),
                                [&expired]()
                                {
                                    expired = true;
@@ -107,14 +107,14 @@ SCENARIO("Task priority")
 
 
         Cron c;
-        REQUIRE(c.add_schedule("Five", create_schedule_expiring_in(c.get_clock(), hours{0}, minutes{0}, seconds{5}),
+        REQUIRE(c.add_schedule("Five", create_schedule_expiring_in(c.get_clock()->now(), hours{0}, minutes{0}, seconds{5}),
                                [&_5_second_expired]()
                                {
                                    _5_second_expired++;
                                })
         );
 
-        REQUIRE(c.add_schedule("Three", create_schedule_expiring_in(c.get_clock(), hours{0}, minutes{0}, seconds{3}),
+        REQUIRE(c.add_schedule("Three", create_schedule_expiring_in(c.get_clock()->now(), hours{0}, minutes{0}, seconds{3}),
                                [&_3_second_expired]()
                                {
                                    _3_second_expired++;
@@ -185,6 +185,24 @@ SCENARIO("Task priority")
                 REQUIRE(_5_second_expired == 1);
             }
         }
-
     }
 }
+
+//SCENARIO("Clock changes")
+//{
+//    GIVEN("A Cron instance with a single task expiring in 4h")
+//    {
+//        Cron c;
+//        auto clock = c.get_clock();
+//        system_clock::time_point time_from_task;
+//        auto now = clock->now();
+//        REQUIRE(c.add_schedule("Task", create_schedule_expiring_in(now, hours{4}, minutes{0}, seconds{0}),
+//                               [clock, &time_from_task]()
+//                               {
+//                                   time_from_task = clock->now();
+//                               })
+//        );
+//
+//
+//    }
+//}
