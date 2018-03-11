@@ -4,6 +4,7 @@
 #include "CronData.h"
 #include "CronSchedule.h"
 #include <chrono>
+#include <utility>
 
 namespace libcron
 {
@@ -11,7 +12,7 @@ namespace libcron
     {
         public:
 
-            Task(const std::string name, const CronSchedule schedule, std::function<void()> task)
+            Task(std::string name, const CronSchedule schedule, std::function<void()> task)
                     : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
             {
             }
