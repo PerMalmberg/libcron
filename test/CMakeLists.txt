@@ -5,9 +5,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra")
 
 include_directories(
-        externals/Catch2/single_include/
-        ..
-        ../libcron/externals/date
+        ${CMAKE_CURRENT_LIST_DIR}/externals/Catch2/single_include/
+        ${CMAKE_CURRENT_LIST_DIR}/../libcron/externals/date/include
+        ${CMAKE_CURRENT_LIST_DIR}/..
 )
 
 add_executable(

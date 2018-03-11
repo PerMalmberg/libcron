@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 
 #include <catch.hpp>
-#include <date.h>
+#include <date/date.h>
 #include <libcron/Cron.h>
 #include <libcron/CronData.h>
 
@@ -20,8 +20,6 @@ bool has_value_range(const std::set<T>& set, uint8_t low, uint8_t high)
 
     return found;
 }
-
-
 
 SCENARIO("Numerical inputs")
 {
