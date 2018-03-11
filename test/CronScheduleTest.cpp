@@ -207,8 +207,23 @@ SCENARIO("Examples from README.md")
                          DT(2018_y / 8 / 16, hours{12}),
                          DT(2018_y / 8 / 17, hours{0})
                  }));
-
 }
+
+//SCENARIO("Daylight Savings Time")
+//{
+//    // In sweden when local standard time is about to reach
+//    //Sunday, 25 March 2018, 02:00:00 clocks are turned forward 1 hour to
+//    //Sunday, 25 March 2018, 03:00:00 local daylight time instead.
+//
+//    REQUIRE(test("0 0 * * * ?", DT(2018_y / 3 / 25, hours{0}),
+//                 {
+//                         DT(2018_y / 3 / 25, hours{0}),
+//                         DT(2018_y / 3 / 25, hours{1}),
+//                         // This hour disappear! DT(2018_y / 3 / 25, hours{2}),
+//                         DT(2018_y / 3 / 25, hours{3}),
+//                         DT(2018_y / 3 / 25, hours{4})
+//                 }));
+//}
 
 SCENARIO("Unable to calculate time point")
 {

@@ -1,6 +1,10 @@
 # libcron
 A C++ scheduling library using cron formatting.
 
+# Time zones
+
+This library uses `std::chrono::system_clock::timepoint` as its time unit, thus all calculations are in UTC. 
+
 # Supported formatting
 
 This implementation supports cron format, as specified below.  
@@ -60,3 +64,8 @@ the '?'-character unless one field already is something other than '*'.
 |0 0 12 * * MON-FRI | Every Weekday at noon
 |0 0 12 1/2 * ?	| Every 2 days, starting on the 1st at noon
 | 0 0 */12 ? * * | Every twelve hours
+
+# Third party libraries
+
+Howard Hinnant's [date.h](https://github.com/HowardHinnant/date/)
+
