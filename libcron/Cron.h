@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <queue>
+#include <memory>
 #include "Task.h"
 
 namespace libcron
@@ -11,16 +12,22 @@ namespace libcron
     {
 
         public:
-            bool add_schedule(const std::string& schedule, std::function<void()> work);
+            bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
 
             size_t count() const
             {
-                return items.size();
+                return tasks.size();
             }
 
-            bool has_expired_task(std::chrono::system_clock::time_point now = std::chrono::system_clock::now()) const;
+            size_t
+            execute_expired_tasks(std::chrono::system_clock::time_point now = std::chrono::system_clock::now());
+
+            std::chrono::system_clock::duration
+            time_until_next(std::chrono::system_clock::time_point now = std::chrono::system_clock::now()) const;
 
         private:
-            std::priority_queue<Task> items{};
+            // Priority queue placing smallest (i.e. nearest in time) items on top.
+            std::priority_queue<Task, std::vector<Task>, std::greater<>> tasks{};
+            void print_queue(std::priority_queue<Task, std::vector<Task>, std::greater<>> queue);
     };
 }

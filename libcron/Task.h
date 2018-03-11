@@ -11,30 +11,44 @@ namespace libcron
     {
         public:
 
-            Task(CronSchedule schedule, std::function<void()> task)
-                    : schedule(std::move(schedule)), task(std::move(task))
+            Task(const std::string name, const CronSchedule schedule, std::function<void()> task)
+                    : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
             {
             }
 
-            Task(const Task&) = default;
+            void execute() const
+            {
+                task();
+            }
+
+            Task(const Task& other) = default;
 
             Task& operator=(const Task&) = default;
 
             bool calculate_next(std::chrono::system_clock::time_point from = std::chrono::system_clock::now());
 
-            bool operator<(const Task& other) const
+            bool operator>(const Task& other) const
             {
-                return next_schedule < other.next_schedule;
+                return next_schedule > other.next_schedule;
             }
 
-            bool is_expired(std::chrono::system_clock::time_point now = std::chrono::system_clock::now()) const
+            bool is_expired(std::chrono::system_clock::time_point now = std::chrono::system_clock::now()) const;
+
+            std::chrono::system_clock::duration
+            time_until_expiry(std::chrono::system_clock::time_point now = std::chrono::system_clock::now()) const;
+
+            std::string get_name() const
             {
-                return now >= next_schedule;
+                return name;
             }
+
+            std::string get_status(std::chrono::system_clock::time_point now) const;
 
         private:
+            std::string name;
             CronSchedule schedule;
             std::chrono::system_clock::time_point next_schedule;
             std::function<void()> task;
+            bool valid = false;
     };
 }

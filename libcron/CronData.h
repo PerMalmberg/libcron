@@ -59,6 +59,7 @@ namespace libcron
             static CronData create(const std::string& cron_expression);
 
             CronData();
+            CronData(const CronData&) = default;
 
             bool is_valid() const
             {

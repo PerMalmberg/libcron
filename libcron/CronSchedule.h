@@ -15,6 +15,8 @@ namespace libcron
             {
             }
 
+            CronSchedule(const CronSchedule&) = default;
+
             std::tuple<bool, std::chrono::system_clock::time_point>
             calculate_from(const std::chrono::system_clock::time_point& from) const;
 
