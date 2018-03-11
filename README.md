@@ -1,9 +1,11 @@
 # libcron
 A C++ scheduling library using cron formatting.
 
-# Time zones
+# Local time vs UTC
 
-This library uses `std::chrono::system_clock::timepoint` as its time unit, thus all calculations are in UTC. 
+This library uses `std::chrono::system_clock::timepoint` as its time unit. While that is UTC by default, the Cron-class
+uses a `LocalClock` by default which offsets `system_clock::now()` by the current UTC-offset. If you wish to work in
+UTC, then construct the Cron instance, passing it a `libcron::UTCClock`.  
 
 # Supported formatting
 
@@ -67,5 +69,5 @@ the '?'-character unless one field already is something other than '*'.
 
 # Third party libraries
 
-Howard Hinnant's [date.h](https://github.com/HowardHinnant/date/)
+Howard Hinnant's [date libraries](https://github.com/HowardHinnant/date/)
 

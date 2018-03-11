@@ -13,7 +13,7 @@ namespace libcron
     {
         public:
 
-            explicit Cron(std::unique_ptr<ICronClock> clock = std::make_unique<UTCClock>())
+            explicit Cron(std::unique_ptr<ICronClock> clock = std::make_unique<LocalClock>())
                     : clock(std::move(clock))
             {
             }
