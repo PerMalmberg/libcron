@@ -36,6 +36,7 @@ namespace libcron
             valid &= validate_numeric<DayOfMonth>(match[4], day_of_month);
             valid &= validate_literal<Months>(match[5], months, month_names);
             valid &= validate_literal<DayOfWeek>(match[6], day_of_week, day_names);
+            valid &= check_dom_vs_dow(match[4], match[6]);
             valid &= validate_date_vs_months();
         }
     }
@@ -84,10 +85,10 @@ namespace libcron
             res = has_any_in_range(day_of_month, 1, 29);
         }
 
-        if(res)
+        if (res)
         {
             // Make sure that if the days contains only 31, at least one month allows that date.
-            if(day_of_month.size() == 1 && day_of_month.find(DayOfMonth::Last) != day_of_month.end())
+            if (day_of_month.size() == 1 && day_of_month.find(DayOfMonth::Last) != day_of_month.end())
             {
                 std::vector<int32_t> months_with_31;
                 for (int32_t i = 1; i <= 12; ++i)
@@ -100,7 +101,7 @@ namespace libcron
                 }
 
                 res = false;
-                for(size_t i = 0; !res && i < months_with_31.size(); ++i)
+                for (size_t i = 0; !res && i < months_with_31.size(); ++i)
                 {
                     res = months.find(static_cast<Months>(months_with_31[i])) != months.end();
                 }
@@ -109,5 +110,24 @@ namespace libcron
 
 
         return res;
+    }
+
+    bool CronData::check_dom_vs_dow(const std::string& dom, const std::string& dow) const
+    {
+        // Day of month and day of week are mutually exclusive so one of them must at always be ignored using
+        // the '?'-character unless one field already is something other than '*'.
+        //
+        // Since we treat an ignored field as allowing the full range, we're OK with both being flagged
+        // as ignored. To make it explicit to the user of the library, we do however require the use of
+        // '?' as the ignore flag, although it is functionally equivalent to '*'.
+
+        auto check = [](const std::string& l, std::string r)
+        {
+            return l == "*" && (r != "*" || r == "?");
+        };
+
+        return (dom == "?" || dow == "?")
+               || check(dom, dow)
+               || check(dow, dom);
     }
 }

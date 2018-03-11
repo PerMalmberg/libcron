@@ -31,7 +31,7 @@ SCENARIO("Numerical inputs")
         {
             THEN("All parts are filled")
             {
-                auto c = CronData::create("* * * * * *");
+                auto c = CronData::create("* * * * * ?");
                 REQUIRE(c.is_valid());
                 REQUIRE(c.get_seconds().size() == 60);
                 REQUIRE(has_value_range(c.get_seconds(), 0, 59));
@@ -49,7 +49,7 @@ SCENARIO("Numerical inputs")
         {
             THEN("Ranges are correct")
             {
-                auto c = CronData::create("* 0-59 * * * *");
+                auto c = CronData::create("* 0-59 * * * ?");
                 REQUIRE(c.is_valid());
                 REQUIRE(c.get_seconds().size() == 60);
                 REQUIRE(c.get_minutes().size() == 60);
@@ -63,7 +63,7 @@ SCENARIO("Numerical inputs")
         {
             THEN("Ranges are correct")
             {
-                auto c = CronData::create("* * * 20-30 * *");
+                auto c = CronData::create("* * * 20-30 * ?");
                 REQUIRE(c.is_valid());
                 REQUIRE(c.get_seconds().size() == 60);
                 REQUIRE(c.get_minutes().size() == 60);
@@ -77,7 +77,7 @@ SCENARIO("Numerical inputs")
         {
             THEN("Number of hours are correct")
             {
-                auto c = CronData::create("* * 20-5 * * *");
+                auto c = CronData::create("* * 20-5 * * ?");
                 REQUIRE(c.is_valid());
                 REQUIRE(c.get_hours().size() == 10);
                 REQUIRE(c.get_hours().find(Hours::First) != c.get_hours().end());
@@ -87,12 +87,12 @@ SCENARIO("Numerical inputs")
         {
             THEN("Validation succeeds")
             {
-                REQUIRE(CronData::create("0-59 * * * * *").is_valid());
-                REQUIRE(CronData::create("* 0-59 * * * *").is_valid());
-                REQUIRE(CronData::create("* * 0-23 * * *").is_valid());
-                REQUIRE(CronData::create("* * * 1-31 * *").is_valid());
-                REQUIRE(CronData::create("* * * * 1-12 *").is_valid());
-                REQUIRE(CronData::create("* * * * * 0-6").is_valid());
+                REQUIRE(CronData::create("0-59 * * * * ?").is_valid());
+                REQUIRE(CronData::create("* 0-59 * * * ?").is_valid());
+                REQUIRE(CronData::create("* * 0-23 * * ?").is_valid());
+                REQUIRE(CronData::create("* * * 1-31 * ?").is_valid());
+                REQUIRE(CronData::create("* * * * 1-12 ?").is_valid());
+                REQUIRE(CronData::create("* * * ? * 0-6").is_valid());
             }
         }
     }
@@ -105,19 +105,19 @@ SCENARIO("Numerical inputs")
                 REQUIRE_FALSE(CronData::create("").is_valid());
                 REQUIRE_FALSE(CronData::create("-").is_valid());
                 REQUIRE_FALSE(CronData::create("* ").is_valid());
-                REQUIRE_FALSE(CronData::create("* 0-60 * * * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * 0-25 * * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * * 1-32 * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * * * 1-13 *").is_valid());
+                REQUIRE_FALSE(CronData::create("* 0-60 * * * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * 0-25 * * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * 1-32 * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * 1-13 ?").is_valid());
                 REQUIRE_FALSE(CronData::create("* * * * * 0-7").is_valid());
-                REQUIRE_FALSE(CronData::create("* * * 0-31 * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * * * 0-12 *").is_valid());
-                REQUIRE_FALSE(CronData::create("60 * * * * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* 60 * * * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * 25 * * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * * 32 * *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * * * 13 *").is_valid());
-                REQUIRE_FALSE(CronData::create("* * * * * 7").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * 0-31 * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * 0-12 ?").is_valid());
+                REQUIRE_FALSE(CronData::create("60 * * * * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* 60 * * * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * 25 * * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * 32 * ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * * 13 ?").is_valid());
+                REQUIRE_FALSE(CronData::create("* * * ? * 7").is_valid());
             }
         }
     }
@@ -131,13 +131,13 @@ SCENARIO("Literal input")
         {
             THEN("Range is valid")
             {
-                auto c = CronData::create("* * * * JAN-MAR *");
+                auto c = CronData::create("* * * * JAN-MAR ?");
                 REQUIRE(c.is_valid());
                 REQUIRE(has_value_range(c.get_months(), 1, 3));
             }
             AND_THEN("Range is valid")
             {
-                auto c = CronData::create("* * * * * SUN-FRI");
+                auto c = CronData::create("* * * ? * SUN-FRI");
                 REQUIRE(c.is_valid());
                 REQUIRE(has_value_range(c.get_day_of_week(), 0, 5));
             }
@@ -146,7 +146,7 @@ SCENARIO("Literal input")
         {
             THEN("Range is valid")
             {
-                auto c = CronData::create("* * * * JAN-MAR,DEC *");
+                auto c = CronData::create("* * * * JAN-MAR,DEC ?");
                 REQUIRE(c.is_valid());
                 REQUIRE(has_value_range(c.get_months(), 1, 3));
                 REQUIRE_FALSE(CronData::has_any_in_range(c.get_months(), 4, 11));
@@ -154,7 +154,7 @@ SCENARIO("Literal input")
             }
             AND_THEN("Range is valid")
             {
-                auto c = CronData::create("* * * * JAN-MAR,DEC FRI,MON,THU");
+                auto c = CronData::create("* * * ? JAN-MAR,DEC FRI,MON,THU");
                 REQUIRE(c.is_valid());
                 REQUIRE(has_value_range(c.get_months(), 1, 3));
                 REQUIRE_FALSE(CronData::has_any_in_range(c.get_months(), 4, 11));
@@ -171,7 +171,7 @@ SCENARIO("Literal input")
         {
             THEN("Range is valid")
             {
-                auto c = CronData::create("* * * * APR-JAN *");
+                auto c = CronData::create("* * * ? APR-JAN *");
                 REQUIRE(c.is_valid());
                 REQUIRE(has_value_range(c.get_months(), 4, 12));
                 REQUIRE(has_value_range(c.get_months(), 1, 1));
@@ -179,7 +179,7 @@ SCENARIO("Literal input")
             }
             AND_THEN("Range is valid")
             {
-                auto c = CronData::create("* * * * * sat-tue,wed");
+                auto c = CronData::create("* * * ? * sat-tue,wed");
                 REQUIRE(c.is_valid());
                 REQUIRE(has_value_range(c.get_day_of_week(), 6, 6)); // Has saturday
                 REQUIRE(has_value_range(c.get_day_of_week(), 0, 3)); // Has sun, mon, tue, wed
@@ -197,7 +197,7 @@ SCENARIO("Using step syntax")
         {
             THEN("Range is valid")
             {
-                auto c = CronData::create("* * * * JAN/2 *");
+                auto c = CronData::create("* * * * JAN/2 ?");
                 REQUIRE(c.is_valid());
                 REQUIRE(has_value_range(c.get_months(), 1, 1));
                 REQUIRE(has_value_range(c.get_months(), 3, 3));
@@ -225,5 +225,5 @@ SCENARIO("Dates that does not exist")
 
 SCENARIO("Date that exist in one of the months")
 {
-    REQUIRE(CronData::create("0 0 * 31 APR,MAY *").is_valid());
+    REQUIRE(CronData::create("0 0 * 31 APR,MAY ?").is_valid());
 }

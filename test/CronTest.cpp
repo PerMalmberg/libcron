@@ -14,7 +14,7 @@ std::string create_schedule_expiring_in(hours h, minutes m, seconds s)
     std::string res{};
     res += std::to_string(dt.sec) + " ";
     res += std::to_string(dt.min) + " ";
-    res += std::to_string(dt.hour) + " * * *";
+    res += std::to_string(dt.hour) + " * * ?";
 
     return res;
 }
@@ -34,7 +34,7 @@ SCENARIO("Adding a task")
 
         WHEN("Adding a task that runs every second")
         {
-            REQUIRE(c.add_schedule("A task", "* * * * * *",
+            REQUIRE(c.add_schedule("A task", "* * * * * ?",
                                    [&expired]()
                                    {
                                        expired = true;

@@ -8,51 +8,6 @@
 
 namespace libcron
 {
-    /*
-        This class parses strings in the format specified below and holds the resulting allowed values
-        in its internal sets.
-
-        Cron format, 6 parts:
-
-       ┌──────────────seconds (0 - 59)
-       │ ┌───────────── minute (0 - 59)
-       │ │ ┌───────────── hour (0 - 23)
-       │ │ │ ┌───────────── day of month (1 - 31)
-       │ │ │ │ ┌───────────── month (1 - 12)
-       │ │ │ │ │ ┌───────────── day of week (0 - 6) (Sunday to Saturday;
-       │ │ │ │ │ │                                       7 is also Sunday on some systems)
-       │ │ │ │ │ │
-       │ │ │ │ │ │
-       * * * * * *
-
-        Allowed formats:
-            Special characters: '*', meaning the entire range.
-
-            Ranges: 1,2,4-6
-                Result: 1,2,4,5,6
-            Steps:  1/2
-                Result: 1,3,5,7...<max>
-
-            For day of month, these strings are valid, case insensitive:
-            SUN, MON, TUE, WED, THU, FRI, SAT
-                Example: MON-THU,SAT
-
-            For month, these strings are valid, case insensitive:
-            JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC
-                Example: JAN,MAR,SEP-NOV
-
-            Each part is separated by one or more whitespaces. It is thus important to keep
-            whitespaces out of the respective parts.
-
-            Valid:
-                * * * * * *
-                0,3,40-50 * * * * *
-
-            Invalid:
-                0, 3, 40-50 * * * * *
-
-     */
-
     class CronData
     {
         public:
@@ -149,6 +104,8 @@ namespace libcron
 
             bool validate_date_vs_months() const;
 
+            bool check_dom_vs_dow(const std::string& dom, const std::string& dow) const;
+
             std::set<Seconds> seconds{};
             std::set<Minutes> minutes{};
             std::set<Hours> hours{};
@@ -213,8 +170,9 @@ namespace libcron
 
         for (const auto& p : parts)
         {
-            if (p == "*")
+            if (p == "*" || p == "?")
             {
+                // We treat the ignore-character '?' the same as the full range being allowed.
                 add_full_range<T>(numbers);
             }
             else if (is_number(p))

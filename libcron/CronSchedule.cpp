@@ -27,8 +27,7 @@ namespace libcron
                 curr = s;
                 date_changed = true;
             }
-                // If all days are allowed, then the 'day of week' takes precedence, which also means that
-                // day of week only is ignored when specific days of months are specified.
+                // If all days are allowed (or the field is ignored via '?'), then the 'day of week' takes precedence.
             else if (data.get_day_of_month().size() != CronData::value_of(DayOfMonth::Last))
             {
                 // Add days until one of the allowed days are found, or stay at the current one.
@@ -56,7 +55,7 @@ namespace libcron
                 }
             }
 
-            if(!date_changed)
+            if (!date_changed)
             {
                 auto date_time = to_calendar_time(curr);
                 if (data.get_hours().find(static_cast<Hours>(date_time.hour)) == data.get_hours().end())
