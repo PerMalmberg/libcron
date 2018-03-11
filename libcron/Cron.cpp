@@ -13,7 +13,7 @@ namespace libcron
         {
 
             Task t{std::move(name), CronSchedule{cron}, std::move(work)};
-            if (t.calculate_next())
+            if (t.calculate_next(clock->now()))
             {
                 tasks.push(t);
             }
@@ -22,7 +22,7 @@ namespace libcron
         return res;
     }
 
-    std::chrono::system_clock::duration Cron::time_until_next(std::chrono::system_clock::time_point now) const
+    std::chrono::system_clock::duration Cron::time_until_next() const
     {
         system_clock::duration d{};
         if (tasks.empty())
@@ -31,7 +31,7 @@ namespace libcron
         }
         else
         {
-            d = tasks.top().time_until_expiry(now);
+            d = tasks.top().time_until_expiry(clock->now());
         }
 
         return d;

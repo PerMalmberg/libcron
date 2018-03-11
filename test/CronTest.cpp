@@ -44,7 +44,7 @@ SCENARIO("Adding a task")
             THEN("Count is 1 and task was not expired two seconds ago")
             {
                 REQUIRE(c.count() == 1);
-                c.execute_expired_tasks(system_clock::now() - 2s);
+                c.execute_expired_tasks(c.get_clock()->now() - 2s);
                 REQUIRE_FALSE(expired);
             }
             AND_THEN("Task is expired when calculating based on current time")

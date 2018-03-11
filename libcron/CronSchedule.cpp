@@ -80,6 +80,6 @@ namespace libcron
             }
         }
 
-        return std::make_tuple(max_iterations > 0, max_iterations > 0 ? curr : system_clock::now());
+        return std::make_tuple(max_iterations > 0, curr);
     }
 }

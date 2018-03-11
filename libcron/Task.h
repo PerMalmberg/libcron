@@ -26,17 +26,17 @@ namespace libcron
 
             Task& operator=(const Task&) = default;
 
-            bool calculate_next(std::chrono::system_clock::time_point from = std::chrono::system_clock::now());
+            bool calculate_next(std::chrono::system_clock::time_point from);
 
             bool operator>(const Task& other) const
             {
                 return next_schedule > other.next_schedule;
             }
 
-            bool is_expired(std::chrono::system_clock::time_point now = std::chrono::system_clock::now()) const;
+            bool is_expired(std::chrono::system_clock::time_point now) const;
 
             std::chrono::system_clock::duration
-            time_until_expiry(std::chrono::system_clock::time_point now = std::chrono::system_clock::now()) const;
+            time_until_expiry(std::chrono::system_clock::time_point now) const;
 
             std::string get_name() const
             {

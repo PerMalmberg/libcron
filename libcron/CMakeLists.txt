@@ -17,4 +17,4 @@ add_library(${PROJECT_NAME}
         CronSchedule.h
         externals/date/date.h
         DateTime.h
-        Task.cpp)
+        Task.cpp CronClock.h)
