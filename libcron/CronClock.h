@@ -10,20 +10,20 @@ namespace libcron
     class ICronClock
     {
         public:
-            virtual std::chrono::system_clock::time_point now() = 0;
-            virtual std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) = 0;
+            virtual std::chrono::system_clock::time_point now() const = 0;
+            virtual std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) const = 0;
     };
 
     class UTCClock
             : public ICronClock
     {
         public:
-            std::chrono::system_clock::time_point now() override
+            std::chrono::system_clock::time_point now() const override
             {
                 return std::chrono::system_clock::now();
             }
 
-            std::chrono::seconds utc_offset(std::chrono::system_clock::time_point) override
+            std::chrono::seconds utc_offset(std::chrono::system_clock::time_point) const override
             {
                 return 0s;
             }
@@ -33,13 +33,13 @@ namespace libcron
             : public ICronClock
     {
         public:
-            std::chrono::system_clock::time_point now() override
+            std::chrono::system_clock::time_point now() const override
             {
                 auto now = system_clock::now();
                 return now + utc_offset(now);
             }
 
-            std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) override
+            std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) const override
             {
                 auto t = system_clock::to_time_t(now);
                 tm tm{};

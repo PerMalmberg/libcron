@@ -8,7 +8,6 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/externals/date/include)
 
 add_library(${PROJECT_NAME}
         Cron.h
-        Cron.cpp
         Task.h
         CronData.h
         TimeTypes.h
@@ -18,3 +17,8 @@ add_library(${PROJECT_NAME}
         DateTime.h
         Task.cpp
         CronClock.h)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
+        LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
+        RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}")

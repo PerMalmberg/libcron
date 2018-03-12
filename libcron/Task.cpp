@@ -56,7 +56,7 @@ namespace libcron
         s+= std::to_string(dt.day) + " ";
         s+= std::to_string(dt.hour) + ":";
         s+= std::to_string(dt.min) + ":";
-        s+= std::to_string(dt.sec) + " UTC";
+        s+= std::to_string(dt.sec);
         return s;
     }
 }

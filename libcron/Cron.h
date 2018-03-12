@@ -9,14 +9,16 @@
 
 namespace libcron
 {
+    template<typename ClockType>
+    class Cron;
+
+    template<typename ClockType>
+    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType>& c);
+
+    template<typename ClockType = libcron::LocalClock>
     class Cron
     {
         public:
-
-            explicit Cron(std::unique_ptr<ICronClock> clock = std::make_unique<LocalClock>())
-                    : clock(std::move(clock))
-            {
-            }
 
             bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
 
@@ -25,24 +27,148 @@ namespace libcron
                 return tasks.size();
             }
 
+            // Tick is expected to be called at least once a second to prevent missing schedules.
             size_t
-            execute_expired_tasks()
+            tick()
             {
-                return execute_expired_tasks(clock->now());
+                return tick(clock.now());
             }
 
             size_t
-            execute_expired_tasks(std::chrono::system_clock::time_point now);
+            tick(std::chrono::system_clock::time_point now);
 
             std::chrono::system_clock::duration
             time_until_next() const;
 
-            std::shared_ptr<ICronClock> get_clock() const { return clock; }
+            ClockType& get_clock()
+            {
+                return clock;
+            }
+
+            friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType>& c);
 
         private:
-            // Priority queue placing smallest (i.e. nearest in time) items on top.
-            std::priority_queue<Task, std::vector<Task>, std::greater<>> tasks{};
-            void print_queue(std::priority_queue<Task, std::vector<Task>, std::greater<>> queue);
-            std::shared_ptr<ICronClock> clock{};
+            class Queue
+                    // Priority queue placing smallest (i.e. nearest in time) items on top.
+                    : public std::priority_queue<Task, std::vector<Task>, std::greater<>>
+            {
+                public:
+                    // Inherit to allow access to the container.
+                    const std::vector<Task>& get_tasks() const
+                    {
+                        return c;
+                    }
+
+                    std::vector<Task>& get_tasks()
+                    {
+                        return c;
+                    }
+            };
+
+            Queue tasks{};
+            ClockType clock{};
+            bool first_tick = true;
+            std::chrono::system_clock::time_point last_tick{};
     };
+
+    template<typename ClockType>
+    bool Cron<ClockType>::add_schedule(std::string name, const std::string& schedule, std::function<void()> work)
+    {
+        auto cron = CronData::create(schedule);
+        bool res = cron.is_valid();
+        if (res)
+        {
+
+            Task t{std::move(name), CronSchedule{cron}, std::move(work)};
+            if (t.calculate_next(clock.now()))
+            {
+                tasks.push(t);
+            }
+        }
+
+        return res;
+    }
+
+    template<typename ClockType>
+    std::chrono::system_clock::duration Cron<ClockType>::time_until_next() const
+    {
+        system_clock::duration d{};
+        if (tasks.empty())
+        {
+            d = std::numeric_limits<minutes>::max();
+        }
+        else
+        {
+            d = tasks.top().time_until_expiry(clock.now());
+        }
+
+        return d;
+    }
+
+    template<typename ClockType>
+    size_t Cron<ClockType>::tick(system_clock::time_point now)
+    {
+        size_t res = 0;
+
+        if (first_tick)
+        {
+            first_tick = false;
+        }
+        else if (now - last_tick < hours{3})
+        {
+            // Reschedule all tasks.
+            for (auto& t : tasks.get_tasks())
+            {
+                t.calculate_next(now);
+            }
+        }
+        else if(now < last_tick && now >= last_tick - hours{3})
+        {
+            // Prevent tasks from running until the clock has reached current 'last_tick'.
+            for (auto& t : tasks.get_tasks())
+            {
+                //t.set_back_limit(last_tick);
+            }
+        }
+
+        last_tick = now;
+
+        std::vector<Task> executed{};
+
+        while (!tasks.empty()
+               && tasks.top().is_expired(now))
+        {
+            executed.push_back(tasks.top());
+            tasks.pop();
+            auto& t = executed[executed.size() - 1];
+            t.execute();
+        }
+
+        res = executed.size();
+
+        // Place executed tasks back onto the priority queue.
+        std::for_each(executed.begin(), executed.end(), [this, &now](Task& task)
+        {
+            // Must calculate new schedules using second after 'now', otherwise
+            // we'll run the same task over and over if it takes less than 1s to execute.
+            if (task.calculate_next(now + 1s))
+            {
+                tasks.push(task);
+            }
+        });
+
+        return res;
+    }
+
+    template<typename ClockType>
+    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType>& c)
+    {
+        std::for_each(c.tasks.get_tasks().cbegin(), c.tasks.get_tasks().cend(),
+                      [&stream, &c](const Task& t)
+                      {
+                          stream << t.get_status(c.clock.now()) << '\n';
+                      });
+
+        return stream;
+    }
 }

@@ -16,3 +16,8 @@ add_executable(
         CronScheduleTest.cpp CronTest.cpp)
 
 target_link_libraries(${PROJECT_NAME} libcron)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
+        LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
+        RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}")
