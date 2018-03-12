@@ -11,7 +11,7 @@ namespace libcron
         CronData c;
         c.parse(cron_expression);
 
-        return std::move(c);
+        return c;
     }
 
     CronData::CronData()
