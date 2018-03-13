@@ -114,7 +114,7 @@ namespace libcron
         {
             first_tick = false;
         }
-        else if (now - last_tick < hours{3})
+        else if (now > last_tick && now - last_tick <= hours{3})
         {
             // Reschedule all tasks.
             for (auto& t : tasks.get_tasks())
@@ -122,7 +122,7 @@ namespace libcron
                 t.calculate_next(now);
             }
         }
-        else if(now < last_tick && now >= last_tick - hours{3})
+        else if(now < last_tick && now - last_tick < hours{3})
         {
             // Prevent tasks from running until the clock has reached current 'last_tick'.
             for (auto& t : tasks.get_tasks())

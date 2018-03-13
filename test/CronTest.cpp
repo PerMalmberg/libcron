@@ -248,7 +248,7 @@ SCENARIO("Clock changes")
                 REQUIRE(c.tick() == 1);
                 REQUIRE(c.tick() == 0);
                 REQUIRE(c.tick() == 0);
-                clock.add(minutes{30});   // 01:30
+                clock.add(minutes{30}); // 01:30
                 REQUIRE(c.tick() == 0);
                 clock.add(minutes{15}); // 01:45
                 REQUIRE(c.tick() == 0);
@@ -261,16 +261,16 @@ SCENARIO("Clock changes")
             THEN("Task are rescheduled, not run")
             {
                 REQUIRE(c.tick() == 1);
-                std::cout << c << std::endl;
+                std::cout << "0: " << c << std::endl;
                 clock.add(hours{3}); // 03:00
                 REQUIRE(c.tick() == 1); // Rescheduled
-                std::cout << c << std::endl;
+                std::cout << "1: " << c << std::endl;
                 clock.add(minutes{15}); // 03:15
-                REQUIRE(c.tick() == 1);
-                std::cout << c << std::endl;
+                REQUIRE(c.tick() == 0);
+                std::cout << "2: " << c << std::endl;
                 clock.add(minutes{45}); // 04:00
                 REQUIRE(c.tick() == 1);
-                std::cout << c << std::endl;
+                std::cout << "3: " << c << std::endl;
             }
         }
 
