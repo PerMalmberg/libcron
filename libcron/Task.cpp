@@ -15,6 +15,9 @@ namespace libcron
         if (valid)
         {
             next_schedule = std::get<1>(result);
+
+            // Make sure that the task is allowed to run.
+            last_run = next_schedule - 1s;
         }
 
         return valid;
@@ -22,7 +25,7 @@ namespace libcron
 
     bool Task::is_expired(std::chrono::system_clock::time_point now) const
     {
-        return valid && time_until_expiry(now) == 0s;
+        return valid && now >= last_run && time_until_expiry(now) == 0s;
     }
 
     std::chrono::system_clock::duration Task::time_until_expiry(std::chrono::system_clock::time_point now) const

@@ -17,8 +17,9 @@ namespace libcron
             {
             }
 
-            void execute() const
+            void execute(std::chrono::system_clock::time_point now)
             {
+                last_run = now;
                 task();
             }
 
@@ -51,5 +52,6 @@ namespace libcron
             std::chrono::system_clock::time_point next_schedule;
             std::function<void()> task;
             bool valid = false;
+            std::chrono::system_clock::time_point last_run = std::numeric_limits<std::chrono::system_clock::time_point>::min();
     };
 }

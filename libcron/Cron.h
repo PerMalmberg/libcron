@@ -122,12 +122,12 @@ namespace libcron
                 t.calculate_next(now);
             }
         }
-        else if(now < last_tick && now - last_tick < hours{3})
+        else if (now < last_tick && now - last_tick <= -hours{3})
         {
-            // Prevent tasks from running until the clock has reached current 'last_tick'.
+            // Reschedule all tasks.
             for (auto& t : tasks.get_tasks())
             {
-                //t.set_back_limit(last_tick);
+                t.calculate_next(now);
             }
         }
 
@@ -141,7 +141,7 @@ namespace libcron
             executed.push_back(tasks.top());
             tasks.pop();
             auto& t = executed[executed.size() - 1];
-            t.execute();
+            t.execute(now);
         }
 
         res = executed.size();
