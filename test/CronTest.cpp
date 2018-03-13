@@ -276,6 +276,10 @@ SCENARIO("Clock changes")
                 REQUIRE(c.tick() == 1);
                 clock.add(-hours{1}); // 23:00
                 REQUIRE(c.tick() == 0);
+                clock.add(-hours{1}); // 22:00
+                REQUIRE(c.tick() == 0);
+                clock.add(hours{3}); // 1:00
+                REQUIRE(c.tick() == 1);
             }
         }
         AND_WHEN("Clock is moved back >3h")
@@ -283,10 +287,10 @@ SCENARIO("Clock changes")
             THEN("Tasks are rescheduled")
             {
                 REQUIRE(c.tick() == 1);
-                clock.add(-hours{3}); // 23:00
+                clock.add(-hours{3}); // 21:00
                 REQUIRE(c.tick() == 1);
                 REQUIRE(c.tick() == 0);
-                clock.add(hours{1}); // 00:00
+                clock.add(hours{1}); // 22:00
                 REQUIRE(c.tick() == 1);
             }
         }
