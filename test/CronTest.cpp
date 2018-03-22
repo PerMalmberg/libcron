@@ -5,6 +5,7 @@
 
 using namespace libcron;
 using namespace std::chrono;
+using namespace date;
 
 std::string create_schedule_expiring_in(std::chrono::system_clock::time_point now, hours h, minutes m, seconds s)
 {
@@ -221,7 +222,7 @@ class TestClock
 
 SCENARIO("Clock changes")
 {
-    GIVEN("A Cron instance with a single task expiring in 4h")
+    GIVEN("A Cron instance with a single task expiring every hour")
     {
         Cron<TestClock> c{};
         auto& clock = c.get_clock();
@@ -239,11 +240,11 @@ SCENARIO("Clock changes")
 
         WHEN("Clock changes <3h forward")
         {
-            THEN("Task expires accordingly")
-            {
-                REQUIRE(c.tick() == 1);
-                clock.add(minutes{30}); // 00:30
-                REQUIRE(c.tick() == 0);
+			THEN("Task expires accordingly")
+			{
+				REQUIRE(c.tick() == 1);
+				clock.add(minutes{ 30 }); // 00:30
+				REQUIRE(c.tick() == 0);
                 clock.add(minutes{30}); // 01:00
                 REQUIRE(c.tick() == 1);
                 REQUIRE(c.tick() == 0);
@@ -294,6 +295,5 @@ SCENARIO("Clock changes")
                 REQUIRE(c.tick() == 1);
             }
         }
-
     }
 }

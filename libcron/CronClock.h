@@ -2,9 +2,6 @@
 
 #include <chrono>
 
-using namespace std::chrono;
-using namespace date;
-
 namespace libcron
 {
     class ICronClock
@@ -25,6 +22,7 @@ namespace libcron
 
             std::chrono::seconds utc_offset(std::chrono::system_clock::time_point) const override
             {
+				using namespace std::chrono;
                 return 0s;
             }
     };
@@ -35,20 +33,10 @@ namespace libcron
         public:
             std::chrono::system_clock::time_point now() const override
             {
-                auto now = system_clock::now();
+                auto now = std::chrono::system_clock::now();
                 return now + utc_offset(now);
             }
 
-            std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) const override
-            {
-                auto t = system_clock::to_time_t(now);
-                tm tm{};
-#ifdef __WIN32
-                localtime_s(&tm, &t);
-#else
-                localtime_r(&t, &tm);
-#endif
-                return seconds{tm.tm_gmtoff};
-            }
+			std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) const override;
     };
 }

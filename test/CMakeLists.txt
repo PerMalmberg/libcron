@@ -2,7 +2,12 @@ cmake_minimum_required(VERSION 3.6)
 project(cron_test)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra")
+
+if( MSVC )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+endif()
 
 include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/externals/Catch2/single_include/
