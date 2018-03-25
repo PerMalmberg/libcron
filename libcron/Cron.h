@@ -45,7 +45,8 @@ namespace libcron
                 return clock;
             }
 
-			void get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status) const;
+            void get_time_until_expiry_for_tasks(
+                    std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status) const;
 
             friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType>& c);
 
@@ -93,10 +94,10 @@ namespace libcron
     template<typename ClockType>
     std::chrono::system_clock::duration Cron<ClockType>::time_until_next() const
     {
-        system_clock::duration d{};
+        std::chrono::system_clock::duration d{};
         if (tasks.empty())
         {
-            d = std::numeric_limits<minutes>::max();
+            d = std::numeric_limits<std::chrono::minutes>::max();
         }
         else
         {
@@ -115,7 +116,7 @@ namespace libcron
         {
             first_tick = false;
         }
-        else if (now > last_tick && now - last_tick <= hours{3})
+        else if (now > last_tick && now - last_tick <= std::chrono::hours{3})
         {
             // Reschedule all tasks.
             for (auto& t : tasks.get_tasks())
@@ -123,7 +124,7 @@ namespace libcron
                 t.calculate_next(now);
             }
         }
-        else if (now < last_tick && now - last_tick <= -hours{3})
+        else if (now < last_tick && now - last_tick <= -std::chrono::hours{3})
         {
             // Reschedule all tasks.
             for (auto& t : tasks.get_tasks())
@@ -152,6 +153,7 @@ namespace libcron
         {
             // Must calculate new schedules using second after 'now', otherwise
             // we'll run the same task over and over if it takes less than 1s to execute.
+            using namespace std::chrono_literals;
             if (task.calculate_next(now + 1s))
             {
                 tasks.push(task);
@@ -161,18 +163,19 @@ namespace libcron
         return res;
     }
 
-	template<typename ClockType>
-	void Cron<ClockType>::get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status) const
-	{
-		auto now = clock.now();
-		status.clear();
+    template<typename ClockType>
+    void Cron<ClockType>::get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string,
+                                                          std::chrono::system_clock::duration>>& status) const
+    {
+        auto now = clock.now();
+        status.clear();
 
-		std::for_each(tasks.get_tasks().cbegin(), tasks.get_tasks().cend(),
-			[&status, &now](const Task& t)
-		{
-			status.emplace_back(t.get_name(), t.time_until_expiry(now));
-		});
-	}
+        std::for_each(tasks.get_tasks().cbegin(), tasks.get_tasks().cend(),
+                      [&status, &now](const Task& t)
+                      {
+                          status.emplace_back(t.get_name(), t.time_until_expiry(now));
+                      });
+    }
 
     template<typename ClockType>
     std::ostream& operator<<(std::ostream& stream, const Cron<ClockType>& c)
