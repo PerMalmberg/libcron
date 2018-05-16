@@ -240,11 +240,11 @@ SCENARIO("Clock changes")
 
         WHEN("Clock changes <3h forward")
         {
-			THEN("Task expires accordingly")
-			{
-				REQUIRE(c.tick() == 1);
-				clock.add(minutes{ 30 }); // 00:30
-				REQUIRE(c.tick() == 0);
+            THEN("Task expires accordingly")
+            {
+                REQUIRE(c.tick() == 1);
+                clock.add(minutes{30}); // 00:30
+                REQUIRE(c.tick() == 0);
                 clock.add(minutes{30}); // 01:00
                 REQUIRE(c.tick() == 1);
                 REQUIRE(c.tick() == 0);
@@ -296,4 +296,42 @@ SCENARIO("Clock changes")
             }
         }
     }
+}
+
+SCENARIO("Multiple ticks per second")
+{
+    Cron<TestClock> c{};
+    auto& clock = c.get_clock();
+
+    auto now = sys_days{2018_y / 05 / 05};
+    clock.set(now);
+
+    int run_count = 0;
+
+    // Every 10 seconds
+    REQUIRE(c.add_schedule("Clock change task", "*/10 0 * * * ?", [&run_count]()
+    {
+        run_count++;
+    })
+    );
+
+    c.tick(now);
+
+    REQUIRE(run_count == 1);
+
+    WHEN("Many ticks during one seconds")
+    {
+        for(auto i = 0; i < 10; ++i)
+        {
+            clock.add(std::chrono::microseconds{1});
+            c.tick();
+        }
+
+        THEN("Run count has not increased")
+        {
+            REQUIRE(run_count == 1);
+        }
+
+    }
+
 }

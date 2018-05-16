@@ -68,6 +68,7 @@ namespace libcron
                     }
             };
 
+
             Queue tasks{};
             ClockType clock{};
             bool first_tick = true;
@@ -111,6 +112,21 @@ namespace libcron
     size_t Cron<ClockType>::tick(std::chrono::system_clock::time_point now)
     {
         size_t res = 0;
+
+        if(!first_tick)
+        {
+            // Only allow time to flow if at least one second has passed since the last tick,
+            // either forward or backward.
+            auto diff = now - last_tick;
+
+            constexpr auto one_second = std::chrono::seconds{1};
+
+            if(diff < one_second && diff > -one_second)
+            {
+                now = last_tick;
+            }
+        }
+
 
         if (first_tick)
         {
