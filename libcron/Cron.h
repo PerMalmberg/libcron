@@ -128,24 +128,37 @@ namespace libcron
         }
 
 
+
+
         if (first_tick)
         {
             first_tick = false;
         }
-        else if (now > last_tick && now - last_tick <= std::chrono::hours{3})
+        else
         {
-            // Reschedule all tasks.
-            for (auto& t : tasks.get_tasks())
+            // https://linux.die.net/man/8/cron
+
+            constexpr auto three_hours = std::chrono::hours{3};
+            auto diff = now - last_tick;
+            auto absolute_diff = diff > diff.zero() ? diff : -diff;
+
+            if(absolute_diff >= three_hours)
             {
-                t.calculate_next(now);
+                // Time changes of more than 3 hours are considered to be corrections to the
+                // clock or timezone, and the new time is used immediately.
+                for (auto& t : tasks.get_tasks())
+                {
+                    t.calculate_next(now);
+                }
             }
-        }
-        else if (now < last_tick && now - last_tick <= -std::chrono::hours{3})
-        {
-            // Reschedule all tasks.
-            for (auto& t : tasks.get_tasks())
+            else
             {
-                t.calculate_next(now);
+                // Change of less than three hours
+
+                // If time has moved backwards: Since tasks are not rescheduled, they won't run before
+                // we're back at least the original point in time which prevents running tasks twice.
+
+                // If time has moved forward, tasks that would have run since last tick will be run.
             }
         }
 
