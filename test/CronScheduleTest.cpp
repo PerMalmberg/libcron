@@ -211,6 +211,5 @@ SCENARIO("Examples from README.md")
 
 SCENARIO("Unable to calculate time point")
 {
-    // TODO: Find a schedule that is unsolvable.
-    //REQUIRE_FALSE(test("0 0 0 1 1 0", DT(2021_y / 12 / 15), DT(2022_y / 1 / 1)));
+    REQUIRE_FALSE(test( "0 0 * 31 FEB *", DT(2021_y / 1 / 1), DT(2022_y / 1 / 1)));
 }
