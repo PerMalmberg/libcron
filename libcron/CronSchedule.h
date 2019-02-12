@@ -2,7 +2,15 @@
 
 #include "CronData.h"
 #include <chrono>
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable:4244)
+#endif
 #include <date/date.h>
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
+
 #include "DateTime.h"
 
 namespace libcron
