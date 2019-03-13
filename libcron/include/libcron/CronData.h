@@ -142,13 +142,13 @@ namespace libcron
         for (const auto& name : names)
         {
             std::regex m(name, std::regex_constants::ECMAScript | std::regex_constants::icase);
-            for (size_t i = 0; i < parts.size(); ++i)
+            for (auto& part : parts)
             {
                 std::string replaced;
-                std::regex_replace(std::back_inserter(replaced), parts[i].begin(), parts[i].end(), m,
+                std::regex_replace(std::back_inserter(replaced), part.begin(), part.end(), m,
                                    std::to_string(value_of_first_name));
 
-                parts[i] = replaced;
+                part = replaced;
             }
 
             value_of_first_name++;
@@ -235,8 +235,8 @@ namespace libcron
 
         if (std::regex_match(s.begin(), s.end(), match, range))
         {
-            auto left = std::stoi(match[1].str().c_str());
-            auto right = std::stoi(match[2].str().c_str());
+            auto left = std::stoi(match[1].str());
+            auto right = std::stoi(match[2].str());
 
             if (is_within_limits<T>(left, right))
             {
@@ -269,10 +269,10 @@ namespace libcron
             }
             else
             {
-                raw_start = std::stoi(match[1].str().c_str());
+                raw_start = std::stoi(match[1].str());
             }
 
-            auto raw_step = std::stoi(match[2].str().c_str());
+            auto raw_step = std::stoi(match[2].str());
 
             if (is_within_limits<T>(raw_start, raw_start) && raw_step > 0)
             {

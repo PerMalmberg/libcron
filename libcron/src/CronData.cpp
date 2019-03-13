@@ -90,15 +90,7 @@ namespace libcron
             // Make sure that if the days contains only 31, at least one month allows that date.
             if (day_of_month.size() == 1 && day_of_month.find(DayOfMonth::Last) != day_of_month.end())
             {
-                std::vector<int32_t> months_with_31;
-                for (int32_t i = 1; i <= 12; ++i)
-                {
-                    auto ymd = 2018_y / i / date::last;
-                    if (unsigned(ymd.day()) == 31)
-                    {
-                        months_with_31.push_back(i);
-                    }
-                }
+                constexpr std::array<uint32_t, 7> months_with_31{1, 3, 5, 7, 8, 10, 12};
 
                 res = false;
                 for (size_t i = 0; !res && i < months_with_31.size(); ++i)
