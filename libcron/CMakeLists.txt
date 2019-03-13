@@ -9,22 +9,24 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 endif()
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/externals/date/include)
-
 add_library(${PROJECT_NAME}
-        Cron.h
-        Task.h
-        CronData.h
-        TimeTypes.h
-        CronData.cpp
-        CronSchedule.cpp
-        CronSchedule.h
-        DateTime.h
-        Task.cpp
-        CronClock.h
-		CronClock.cpp)
+		include/libcron/Cron.h
+		include/libcron/CronClock.h
+		include/libcron/CronData.h
+		include/libcron/CronSchedule.h
+		include/libcron/DateTime.h
+		include/libcron/Task.h
+		include/libcron/TimeTypes.h
+		src/CronClock.cpp
+		src/CronData.cpp
+		src/CronSchedule.cpp
+		src/Task.cpp)
+
+target_include_directories(${PROJECT_NAME}
+		PRIVATE ${CMAKE_CURRENT_LIST_DIR}/externals/date/include
+		PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
-        LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
-        RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}")
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out")

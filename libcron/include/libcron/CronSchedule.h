@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CronData.h"
+#include "libcron/CronData.h"
 #include <chrono>
 #ifdef _WIN32
 #pragma warning(push)
@@ -11,7 +11,7 @@
 #pragma warning(pop)
 #endif
 
-#include "DateTime.h"
+#include "libcron/DateTime.h"
 
 namespace libcron
 {

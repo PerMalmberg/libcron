@@ -1,7 +1,7 @@
 #include <catch.hpp>
 #include <chrono>
 #include <date/date.h>
-#include <libcron/Cron.h>
+#include <libcron/include/libcron/Cron.h>
 #include <iostream>
 
 using namespace libcron;

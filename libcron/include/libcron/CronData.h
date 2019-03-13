@@ -4,7 +4,7 @@
 #include <regex>
 #include <string>
 #include <vector>
-#include "TimeTypes.h"
+#include <libcron/TimeTypes.h>
 
 namespace libcron
 {
