@@ -5,6 +5,13 @@ using namespace date;
 
 namespace libcron
 {
+    const constexpr std::array<Months, 7> CronData::months_with_31{ Months::January,
+                                                                    Months::March,
+                                                                    Months::May,
+                                                                    Months::July,
+                                                                    Months::August,
+                                                                    Months::October,
+                                                                    Months::December };
 
     CronData CronData::create(const std::string& cron_expression)
     {
@@ -15,16 +22,16 @@ namespace libcron
     }
 
     CronData::CronData()
-            : month_names({"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}),
-              day_names({"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"})
+            : month_names({ "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" }),
+              day_names({ "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" })
     {
     }
 
     void CronData::parse(const std::string& cron_expression)
     {
         // First, split on white-space. We expect six parts.
-        std::regex split{R"#(^\s*(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s*$)#",
-                         std::regex_constants::ECMAScript};
+        std::regex split{ R"#(^\s*(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s*$)#",
+                          std::regex_constants::ECMAScript };
 
         std::smatch match;
 
@@ -48,12 +55,11 @@ namespace libcron
         std::string r = "[";
         r += token;
         r += "]";
-        std::regex splitter{r, std::regex_constants::ECMAScript};
+        std::regex splitter{ r, std::regex_constants::ECMAScript };
 
         std::copy(std::sregex_token_iterator(s.begin(), s.end(), splitter, -1),
                   std::sregex_token_iterator(),
                   std::back_inserter(res));
-
 
         return res;
     }
@@ -90,16 +96,14 @@ namespace libcron
             // Make sure that if the days contains only 31, at least one month allows that date.
             if (day_of_month.size() == 1 && day_of_month.find(DayOfMonth::Last) != day_of_month.end())
             {
-                constexpr std::array<uint32_t, 7> months_with_31{1, 3, 5, 7, 8, 10, 12};
-
                 res = false;
+
                 for (size_t i = 0; !res && i < months_with_31.size(); ++i)
                 {
-                    res = months.find(static_cast<Months>(months_with_31[i])) != months.end();
+                    res = months.find(months_with_31[i]) != months.end();
                 }
             }
         }
-
 
         return res;
     }
@@ -114,9 +118,9 @@ namespace libcron
         // '?' as the ignore flag, although it is functionally equivalent to '*'.
 
         auto check = [](const std::string& l, std::string r)
-        {
-            return l == "*" && (r != "*" || r == "?");
-        };
+                     {
+                         return l == "*" && (r != "*" || r == "?");
+                     };
 
         return (dom == "?" || dow == "?")
                || check(dom, dow)

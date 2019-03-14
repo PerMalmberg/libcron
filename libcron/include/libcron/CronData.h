@@ -11,9 +11,12 @@ namespace libcron
     class CronData
     {
         public:
+            static const std::array<Months, 7> months_with_31;
+
             static CronData create(const std::string& cron_expression);
 
             CronData();
+
             CronData(const CronData&) = default;
 
             bool is_valid() const
@@ -61,6 +64,7 @@ namespace libcron
             static bool has_any_in_range(const std::set<T>& set, uint8_t low, uint8_t high)
             {
                 bool found = false;
+
                 for (auto i = low; !found && i <= high; ++i)
                 {
                     found |= set.find(static_cast<T>(i)) != set.end();
@@ -69,8 +73,10 @@ namespace libcron
                 return found;
             }
 
-        private:
+            template<typename T>
+            bool convert_from_string_range_to_number_range(const std::string& range, std::set<T>& numbers);
 
+        private:
             void parse(const std::string& cron_expression);
 
             template<typename T>
@@ -142,6 +148,7 @@ namespace libcron
         for (const auto& name : names)
         {
             std::regex m(name, std::regex_constants::ECMAScript | std::regex_constants::icase);
+
             for (auto& part : parts)
             {
                 std::string replaced;
@@ -155,7 +162,6 @@ namespace libcron
         }
 
         return process_parts(parts, numbers);
-
     }
 
     template<typename T>
@@ -163,60 +169,9 @@ namespace libcron
     {
         bool res = true;
 
-        T left;
-        T right;
-        uint8_t step_start;
-        uint8_t step;
-
         for (const auto& p : parts)
         {
-            if (p == "*" || p == "?")
-            {
-                // We treat the ignore-character '?' the same as the full range being allowed.
-                add_full_range<T>(numbers);
-            }
-            else if (is_number(p))
-            {
-                res &= add_number<T>(numbers, std::stoi(p));
-            }
-            else if (get_range<T>(p, left, right))
-            {
-                // A range can be written as both 1-22 or 22-1, meaning totally different ranges.
-                // First case is 1...22 while 22-1 is only four hours: 22, 23, 0, 1.
-                if (left <= right)
-                {
-                    for (auto v = value_of(left); v <= value_of(right); ++v)
-                    {
-                        res &= add_number(numbers, v);
-                    }
-                }
-                else
-                {
-                    // 'left' and 'right' are not in value order. First, get values between 'left' and T::Last, inclusive
-                    for (auto v = value_of(left); v <= value_of(T::Last); ++v)
-                    {
-                        res &= add_number(numbers, v);
-                    }
-
-                    // Next, get values between T::First and 'right', inclusive.
-                    for (auto v = value_of(T::First); v <= value_of(right); ++v)
-                    {
-                        res &= add_number(numbers, v);
-                    }
-                }
-            }
-            else if (get_step<T>(p, step_start, step))
-            {
-                // Add from step_start to T::Last with a step of 'step'
-                for (auto v = step_start; v <= value_of(T::Last); v += step)
-                {
-                    res &= add_number(numbers, v);
-                }
-            }
-            else
-            {
-                res = false;
-            }
+            res &= convert_from_string_range_to_number_range(p, numbers);
         }
 
         return res;
@@ -263,7 +218,8 @@ namespace libcron
         if (std::regex_match(s.begin(), s.end(), match, range))
         {
             int raw_start;
-            if(match[1].str() == "*")
+
+            if (match[1].str() == "*")
             {
                 raw_start = value_of(T::First);
             }
@@ -326,5 +282,64 @@ namespace libcron
                && is_between(high, value_of(T::First), value_of(T::Last));
     }
 
+    template<typename T>
+    bool CronData::convert_from_string_range_to_number_range(const std::string& range, std::set<T>& numbers)
+    {
+        T left;
+        T right;
+        uint8_t step_start;
+        uint8_t step;
 
+        bool res = true;
+
+        if (range == "*" || range == "?")
+        {
+            // We treat the ignore-character '?' the same as the full range being allowed.
+            add_full_range<T>(numbers);
+        }
+        else if (is_number(range))
+        {
+            res = add_number<T>(numbers, std::stoi(range));
+        }
+        else if (get_range<T>(range, left, right))
+        {
+            // A range can be written as both 1-22 or 22-1, meaning totally different ranges.
+            // First case is 1...22 while 22-1 is only four hours: 22, 23, 0, 1.
+            if (left <= right)
+            {
+                for (auto v = value_of(left); v <= value_of(right); ++v)
+                {
+                    res &= add_number(numbers, v);
+                }
+            }
+            else
+            {
+                // 'left' and 'right' are not in value order. First, get values between 'left' and T::Last, inclusive
+                for (auto v = value_of(left); v <= value_of(T::Last); ++v)
+                {
+                    res = add_number(numbers, v);
+                }
+
+                // Next, get values between T::First and 'right', inclusive.
+                for (auto v = value_of(T::First); v <= value_of(right); ++v)
+                {
+                    res = add_number(numbers, v);
+                }
+            }
+        }
+        else if (get_step<T>(range, step_start, step))
+        {
+            // Add from step_start to T::Last with a step of 'step'
+            for (auto v = step_start; v <= value_of(T::Last); v += step)
+            {
+                res = add_number(numbers, v);
+            }
+        }
+        else
+        {
+            res = false;
+        }
+
+        return res;
+    }
 }

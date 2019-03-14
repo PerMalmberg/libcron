@@ -18,11 +18,13 @@ include_directories(
 add_executable(
         ${PROJECT_NAME}
         CronDataTest.cpp
-        CronScheduleTest.cpp CronTest.cpp)
+        CronRandomizationTest.cpp
+		CronScheduleTest.cpp
+		CronTest.cpp)
 
 target_link_libraries(${PROJECT_NAME} libcron)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
-        LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}"
-        RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_LOCATION}")
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out")

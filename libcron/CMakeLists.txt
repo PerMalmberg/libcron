@@ -13,18 +13,20 @@ add_library(${PROJECT_NAME}
 		include/libcron/Cron.h
 		include/libcron/CronClock.h
 		include/libcron/CronData.h
+		include/libcron/CronRandomization.h
 		include/libcron/CronSchedule.h
 		include/libcron/DateTime.h
 		include/libcron/Task.h
 		include/libcron/TimeTypes.h
 		src/CronClock.cpp
 		src/CronData.cpp
+		src/CronRandomization.cpp
 		src/CronSchedule.cpp
 		src/Task.cpp)
 
 target_include_directories(${PROJECT_NAME}
 		PRIVATE ${CMAKE_CURRENT_LIST_DIR}/externals/date/include
-		PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+		PUBLIC include)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"
