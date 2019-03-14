@@ -61,17 +61,21 @@ namespace libcron
                     std::to_string(left) + "-" + std::to_string(right), numbers);
 
             // Remove items outside limits.
-//            for(auto it = numbers.begin(); it != numbers.end();)
-//            {
-//                if(CronData::value_of(*it) < limit.first || CronData::value_of(*it) > limit.second)
-//                {
-//                    it = numbers.erase(it);
-//                }
-//                else
-//                {
-//                    ++it;
-//                }
-//            }
+            if(limit.first != -1 && limit.second != -1)
+            {
+                for (auto it = numbers.begin();
+                     it != numbers.end();)
+                {
+                    if (CronData::value_of(*it) < limit.first || CronData::value_of(*it) > limit.second)
+                    {
+                        it = numbers.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+            }
 
             if (res.first)
             {

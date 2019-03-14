@@ -49,7 +49,7 @@ namespace libcron
             std::set<Months> month_range{};
             if (selected_value == -1)
             {
-                // Month is not specific, we need to get the 'max minimum' day of month to use.
+                // Month is not specific, get the range.
                 CronData cr;
                 res &= cr.convert_from_string_range_to_number_range<Months>(all_sections[5].str(), month_range);
             }
@@ -77,7 +77,7 @@ namespace libcron
 
     std::pair<int, int> CronRandomization::day_limiter(const std::set<Months>& months)
     {
-        auto max = 31;
+        int max = CronData::value_of(DayOfMonth::Last);
 
         for (auto month : months)
         {
@@ -90,11 +90,8 @@ namespace libcron
                                CronData::months_with_31.end(),
                                month) == CronData::months_with_31.end())
             {
+                // Not among the months with 31 days
                 max = std::min(max, 30);
-            }
-            else
-            {
-                max = std::min(max, 31);
             }
         }
 
