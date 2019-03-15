@@ -5,13 +5,13 @@ using namespace date;
 
 namespace libcron
 {
-    const constexpr std::array<Months, 7> CronData::months_with_31{ Months::January,
-                                                                    Months::March,
-                                                                    Months::May,
-                                                                    Months::July,
-                                                                    Months::August,
-                                                                    Months::October,
-                                                                    Months::December };
+    const constexpr Months CronData::months_with_31[NUMBER_OF_LONG_MONTHS] = { Months::January,
+                                                                               Months::March,
+                                                                               Months::May,
+                                                                               Months::July,
+                                                                               Months::August,
+                                                                               Months::October,
+                                                                               Months::December };
 
     CronData CronData::create(const std::string& cron_expression)
     {
@@ -98,7 +98,7 @@ namespace libcron
             {
                 res = false;
 
-                for (size_t i = 0; !res && i < months_with_31.size(); ++i)
+                for (size_t i = 0; !res && i < NUMBER_OF_LONG_MONTHS; ++i)
                 {
                     res = months.find(months_with_31[i]) != months.end();
                 }

@@ -11,7 +11,8 @@ namespace libcron
     class CronData
     {
         public:
-            static const std::array<Months, 7> months_with_31;
+            static const int NUMBER_OF_LONG_MONTHS = 7;
+            static const libcron::Months months_with_31[NUMBER_OF_LONG_MONTHS];
 
             static CronData create(const std::string& cron_expression);
 

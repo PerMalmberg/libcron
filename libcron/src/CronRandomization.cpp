@@ -87,9 +87,9 @@ namespace libcron
                 // Limit to 29 days, possibly causing delaying schedule until next leap year.
                 max = std::min(max, 29);
             }
-            else if (std::find(CronData::months_with_31.begin(),
-                               CronData::months_with_31.end(),
-                               month) == CronData::months_with_31.end())
+            else if (std::find(std::begin(CronData::months_with_31),
+                               std::end(CronData::months_with_31),
+                               month) == std::end(CronData::months_with_31))
             {
                 // Not among the months with 31 days
                 max = std::min(max, 30);
