@@ -2,8 +2,8 @@
 
 #include <catch.hpp>
 #include <date/date.h>
-#include <libcron/Cron.h>
-#include <libcron/CronData.h>
+#include <libcron/include/libcron/Cron.h>
+#include <libcron/include/libcron/CronData.h>
 
 using namespace libcron;
 using namespace date;

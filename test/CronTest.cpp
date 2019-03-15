@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include <libcron/Cron.h>
+#include <libcron/include/libcron/Cron.h>
 #include <thread>
 #include <iostream>
 
