@@ -13,7 +13,7 @@ void test(const char* const random_schedule)
     libcron::CronRandomization cr;
     std::unordered_map<int, std::unordered_map<int, int>> results{};
 
-    for (int i = 0; i < 10000; ++i)
+    for (int i = 0; i < 50000; ++i)
     {
         auto res = cr.parse(random_schedule);
         REQUIRE(std::get<0>(res));

@@ -47,6 +47,7 @@ namespace libcron
             res &= month.first;
 
             std::set<Months> month_range{};
+
             if (selected_value == -1)
             {
                 // Month is not specific, get the range.

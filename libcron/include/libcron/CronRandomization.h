@@ -26,6 +26,7 @@ namespace libcron
                                                              std::pair<int, int> limit = std::make_pair(-1, -1));
 
             std::pair<int, int> day_limiter(const std::set<Months>& month);
+
             int cap(int value, int lower, int upper);
 
             std::regex const rand_expression{ R"#([rR]\((\d+)\-(\d+)\))#", std::regex_constants::ECMAScript };
@@ -61,10 +62,9 @@ namespace libcron
                     std::to_string(left) + "-" + std::to_string(right), numbers);
 
             // Remove items outside limits.
-            if(limit.first != -1 && limit.second != -1)
+            if (limit.first != -1 && limit.second != -1)
             {
-                for (auto it = numbers.begin();
-                     it != numbers.end();)
+                for (auto it = numbers.begin(); it != numbers.end(); )
                 {
                     if (CronData::value_of(*it) < limit.first || CronData::value_of(*it) > limit.second)
                     {
