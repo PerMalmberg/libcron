@@ -56,18 +56,33 @@ Each part is separated by one or more whitespaces. It is thus important to keep 
   * 0, 3, 40-50 * * * * ?
   
 `Day of month` and `day of week` are mutually exclusive so one of them must at always be ignored using
-the '?'-character unless one field already is something other than '*'. 
+the '?'-character to ensure that it is not possible to specify a statement which results in an impossible mix of these fields. 
 
-# Examples
+## Examples
 
 |Expression | Meaning
 | --- | --- |
 | * * * * * ? | Every second
-|0 0 12 * * MON-FRI | Every Weekday at noon
-|0 0 12 1/2 * ?	| Every 2 days, starting on the 1st at noon
+| 0 0 12 * * MON-FRI | Every Weekday at noon
+| 0 0 12 1/2 * ?	| Every 2 days, starting on the 1st at noon
 | 0 0 */12 ? * * | Every twelve hours
 
-# Third party libraries
+# Randomization
+
+The standard cron format does not allow for randomization, but with the use of `CronRandomization` you can generate random
+schedules using the following format: `R(range_start-range_end)`, where `range_start` and `range_end` follow the same rules
+as for a regular cron range with the addition that only numbers are allowed. All the rules for a regular cron expression 
+still applies when using randomization, i.e. mutual exclusiveness and not extra spaces.
+
+## Examples
+|Expression | Meaning
+| --- | --- |
+| 0 0 R(13-20) * * ? | On the hour, on a random hour 13-20, inclusive.
+| 0 0 0 ? * R(0-6) | A random weekday, every week, at midnight.
+| 0 R(45-15) */12 ? * * | A random minute between 45-15, inclusive, every 12 hours.
+
+
+# Used Third party libraries
 
 Howard Hinnant's [date libraries](https://github.com/HowardHinnant/date/)
 

@@ -13,7 +13,7 @@ void test(const char* const random_schedule)
     libcron::CronRandomization cr;
     std::unordered_map<int, std::unordered_map<int, int>> results{};
 
-    for (int i = 0; i < 50000; ++i)
+    for (int i = 0; i < 5000; ++i)
     {
         auto res = cr.parse(random_schedule);
         REQUIRE(std::get<0>(res));
@@ -73,6 +73,33 @@ SCENARIO("Randomize all the things with reverse ranges - day of week")
         THEN("Only valid schedules generated")
         {
             test(random_schedule);
+        }
+    }
+}
+
+SCENARIO("Test readme examples")
+{
+    GIVEN("0 0 R(13-20) * * ?")
+    {
+        THEN("Valid schedule generated")
+        {
+            test("0 0 R(13-20) * * ?");
+        }
+    }
+
+    GIVEN("0 0 0 ? * R(0-6)")
+    {
+        THEN("Valid schedule generated")
+        {
+            test("0 0 0 ? * R(0-6)");
+        }
+    }
+
+    GIVEN("0 R(45-15) */12 ? * *")
+    {
+        THEN("Valid schedule generated")
+        {
+            test("0 R(45-15) */12 ? * *");
         }
     }
 }
