@@ -13,18 +13,15 @@ namespace libcron
                                                                                Months::October,
                                                                                Months::December };
 
+    const std::vector<std::string> CronData::month_names{ "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" };
+    const std::vector<std::string> CronData::day_names{ "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
+
     CronData CronData::create(const std::string& cron_expression)
     {
         CronData c;
         c.parse(cron_expression);
 
         return c;
-    }
-
-    CronData::CronData()
-            : month_names({ "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" }),
-              day_names({ "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" })
-    {
     }
 
     void CronData::parse(const std::string& cron_expression)

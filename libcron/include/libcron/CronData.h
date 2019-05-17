@@ -16,7 +16,7 @@ namespace libcron
 
             static CronData create(const std::string& cron_expression);
 
-            CronData();
+            CronData() = default;
 
             CronData(const CronData&) = default;
 
@@ -77,6 +77,9 @@ namespace libcron
             template<typename T>
             bool convert_from_string_range_to_number_range(const std::string& range, std::set<T>& numbers);
 
+            template<typename T>
+            static std::string& replace_string_name_with_numeric(std::string& s);
+
         private:
             void parse(const std::string& cron_expression);
 
@@ -121,8 +124,8 @@ namespace libcron
             std::set<DayOfWeek> day_of_week{};
             bool valid = false;
 
-            std::vector<std::string> month_names;
-            std::vector<std::string> day_names;
+            static const std::vector<std::string> month_names;
+            static const std::vector<std::string> day_names;
 
             template<typename T>
             void add_full_range(std::set<T>& set);
@@ -342,5 +345,41 @@ namespace libcron
         }
 
         return res;
+    }
+
+    template<typename T>
+    std::string & CronData::replace_string_name_with_numeric(std::string& s)
+    {
+        auto value = static_cast<int>(T::First);
+
+        const std::vector<std::string>* name_source{};
+
+        static_assert(std::is_same<T, libcron::Months>()
+                      || std::is_same<T, libcron::DayOfWeek>(),
+                        "T must be either Months or DayOfWeek");
+
+        if constexpr (std::is_same<T, libcron::Months>())
+        {
+            name_source = &month_names;
+        }
+        else
+        {
+            name_source = &day_names;
+        }
+
+        for (const auto& name : *name_source)
+        {
+            std::regex m(name, std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+            std::string replaced;
+
+            std::regex_replace(std::back_inserter(replaced), s.begin(), s.end(), m, std::to_string(value));
+
+            s = replaced;
+
+            ++value;
+        }
+
+        return s;
     }
 }

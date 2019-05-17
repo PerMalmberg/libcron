@@ -71,8 +71,8 @@ the '?'-character to ensure that it is not possible to specify a statement which
 
 The standard cron format does not allow for randomization, but with the use of `CronRandomization` you can generate random
 schedules using the following format: `R(range_start-range_end)`, where `range_start` and `range_end` follow the same rules
-as for a regular cron range with the addition that only numbers are allowed. All the rules for a regular cron expression 
-still applies when using randomization, i.e. mutual exclusiveness and not extra spaces.
+as for a regular cron range (step-syntax is not supported). All the rules for a regular cron expression still applies
+when using randomization, i.e. mutual exclusiveness and no extra spaces.
 
 ## Examples
 |Expression | Meaning
@@ -80,6 +80,7 @@ still applies when using randomization, i.e. mutual exclusiveness and not extra 
 | 0 0 R(13-20) * * ? | On the hour, on a random hour 13-20, inclusive.
 | 0 0 0 ? * R(0-6) | A random weekday, every week, at midnight.
 | 0 R(45-15) */12 ? * * | A random minute between 45-15, inclusive, every 12 hours.
+|0 0 0 ? R(DEC-MAR) R(SAT-SUN)| On the hour, on a random month december to march, on a random weekday saturday to sunday. 
 
 
 # Used Third party libraries

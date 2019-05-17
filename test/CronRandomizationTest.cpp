@@ -7,21 +7,31 @@
 #include <iostream>
 
 using namespace libcron;
+const auto EXPECT_FAILURE = true;
 
-void test(const char* const random_schedule)
+void test(const char* const random_schedule, bool expect_failure = false)
 {
     libcron::CronRandomization cr;
-    std::unordered_map<int, std::unordered_map<int, int>> results{};
 
     for (int i = 0; i < 5000; ++i)
     {
         auto res = cr.parse(random_schedule);
-        REQUIRE(std::get<0>(res));
         auto schedule = std::get<1>(res);
 
-        INFO("schedule:" << schedule);
         Cron<> cron;
-        REQUIRE(cron.add_schedule("validate schedule", schedule, []() {}));
+
+        if(expect_failure)
+        {
+            // Parsing of random might succeed, but it yields an invalid schedule.
+            auto r = std::get<0>(res) && cron.add_schedule("validate schedule", schedule, []() {});
+            REQUIRE_FALSE(r);
+        }
+        else
+        {
+            REQUIRE(std::get<0>(res));
+            REQUIRE(cron.add_schedule("validate schedule", schedule, []() {}));
+
+        }
     }
 }
 
@@ -101,5 +111,70 @@ SCENARIO("Test readme examples")
         {
             test("0 R(45-15) */12 ? * *");
         }
+    }
+}
+
+SCENARIO("Randomization using text versions of days and months")
+{
+    GIVEN("0 0 0 ? * R(TUE-FRI)")
+    {
+        THEN("Valid schedule generated")
+        {
+           test("0 0 0 ? * R(TUE-FRI)");
+        }
+    }
+
+    GIVEN("Valid schedule")
+    {
+        THEN("Valid schedule generated")
+        {
+            test("0 0 0 ? R(JAN-DEC) R(MON-FRI)");
+        }
+        AND_WHEN("Given 0 0 0 ? R(DEC-MAR) R(SAT-SUN)")
+        {
+            THEN("Valid schedule generated")
+            {
+                test("0 0 0 ? R(DEC-MAR) R(SAT-SUN)");
+            }
+        }
+        AND_THEN("Given 0 0 0 ? R(JAN-FEB) *")
+        {
+            THEN("Valid schedule generated")
+            {
+                test("0 0 0 ? R(JAN-FEB) *");
+            }
+        }
+        AND_THEN("Given 0 0 0 ? R(OCT-OCT) *")
+        {
+            THEN("Valid schedule generated")
+            {
+                test("0 0 0 ? R(OCT-OCT) *");
+            }
+        }
+    }
+
+    GIVEN("Invalid schedule")
+    {
+        THEN("No schedule generated")
+        {
+            // Day of month specified - not allowed with day of week
+            test("0 0 0 1 R(JAN-DEC) R(MON-SUN)", EXPECT_FAILURE);
+        }
+        AND_THEN("No schedule generated")
+        {
+            // Invalid range
+            test("0 0 0 ? R(JAN) *", EXPECT_FAILURE);
+        }
+        AND_THEN("No schedule generated")
+        {
+            // Days in month field
+            test("0 0 0 ? R(MON-TUE) *", EXPECT_FAILURE);
+        }
+        AND_THEN("No schedule generated")
+        {
+            // Month in day field
+            test("0 0 0 ? * R(JAN-JUN)", EXPECT_FAILURE);
+        }
+
     }
 }
