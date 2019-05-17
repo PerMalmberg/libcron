@@ -44,7 +44,7 @@ namespace libcron
 
         std::smatch random_match;
 
-        if (std::regex_match(section.begin(), section.end(), random_match, rand_expression))
+        if (std::regex_match(section.cbegin(), section.cend(), random_match, rand_expression))
         {
             // Random range, get left and right numbers.
             auto left = std::stoi(random_match[1].str());

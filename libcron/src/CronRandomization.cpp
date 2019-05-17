@@ -18,14 +18,46 @@ namespace libcron
     std::tuple<bool, std::string> CronRandomization::parse(const std::string& cron_schedule)
     {
         // Split on space to get each separate part, six parts expected
-        std::regex split{ R"#(^\s*(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s*$)#",
-                          std::regex_constants::ECMAScript };
+        const std::regex split{ R"#(^\s*(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s*$)#",
+                                std::regex_constants::ECMAScript };
 
         std::smatch all_sections;
+        auto res = std::regex_match(cron_schedule.cbegin(), cron_schedule.cend(), all_sections, split);
 
-        std::string final_cron_schedule;
+        // Replace text with numbers
+        std::string working_copy{};
 
-        auto res = std::regex_match(cron_schedule.begin(), cron_schedule.end(), all_sections, split);
+        if (res)
+        {
+            // Merge seconds, minutes, hours and day of month back together
+            working_copy += all_sections[1].str();
+            working_copy += " ";
+            working_copy += all_sections[2].str();
+            working_copy += " ";
+            working_copy += all_sections[3].str();
+            working_copy += " ";
+            working_copy += all_sections[4].str();
+            working_copy += " ";
+
+            // Replace month names
+            auto month = all_sections[5].str();
+            CronData::replace_string_name_with_numeric<libcron::Months>(month);
+
+            working_copy += " ";
+            working_copy += month;
+
+            // Replace day names
+            auto dow = all_sections[6].str();
+            CronData::replace_string_name_with_numeric<libcron::DayOfWeek>(dow);
+
+            working_copy += " ";
+            working_copy += dow;
+        }
+
+        std::string final_cron_schedule{};
+
+        // Split again on space
+        res = res && std::regex_match(working_copy.cbegin(), working_copy.cend(), all_sections, split);
 
         if (res)
         {

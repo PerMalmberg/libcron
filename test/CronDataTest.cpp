@@ -225,3 +225,16 @@ SCENARIO("Date that exist in one of the months")
 {
     REQUIRE(CronData::create("0 0 * 31 APR,MAY ?").is_valid());
 }
+
+SCENARIO("Replacing text with numbers")
+{
+    {
+        std::string s = "SUN-TUE";
+        REQUIRE(CronData::replace_string_name_with_numeric<libcron::DayOfWeek>(s) == "0-2");
+    }
+
+    {
+        std::string s = "JAN-DEC";
+        REQUIRE(CronData::replace_string_name_with_numeric<libcron::Months>(s) == "1-12");
+    }
+}
