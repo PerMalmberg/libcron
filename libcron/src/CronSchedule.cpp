@@ -46,7 +46,7 @@ namespace libcron
                 //Add days until the current weekday is one of the allowed weekdays
                 year_month_weekday ymw = date::floor<days>(curr);
 
-                if (data.get_day_of_week().find(static_cast<DayOfWeek>(unsigned(ymw.weekday()))) ==
+                if (data.get_day_of_week().find(static_cast<DayOfWeek>(ymw.weekday().c_encoding())) ==
                     data.get_day_of_week().end())
                 {
                     sys_days s = ymd;
