@@ -68,7 +68,7 @@ inline bool operator==(const libcron::Task &lhs, const std::string &rhs)
 
 inline bool operator!=(const std::string &lhs, const libcron::Task &rhs)
 {
-    return lhs != rhs.get_name();
+    return !(lhs == rhs);
 }
 
 inline bool operator!=(const libcron::Task &lhs, const std::string &rhs)
