@@ -148,7 +148,7 @@ namespace libcron
     }
     
     template<typename ClockType>
-    void Cron<ClockType>::remove_schedule(std::string name)
+    void Cron<ClockType>::remove_schedule(const std::string& name)
     {
         tasks.remove(name);
     }
