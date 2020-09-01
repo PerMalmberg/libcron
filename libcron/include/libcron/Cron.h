@@ -22,7 +22,7 @@ namespace libcron
         public:
 
             bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
-            void remove_schedules();
+            void clear_schedules();
             void remove_schedule(std::string name);
 
             size_t count() const
