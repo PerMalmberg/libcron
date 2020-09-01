@@ -91,11 +91,8 @@ namespace libcron
                         lock.lock();
 
                         /* Copy current elements */
-                        std::vector<Task> temp = c;
-
-                        /* Clear the Container */
-                        while (!empty())
-                            pop();
+                        std::vector<Task> temp{};
+                        std::swap(temp, c);
 
                         /* Refill with elements ensuring correct order by calling push */
                         for (const auto& task : temp)
