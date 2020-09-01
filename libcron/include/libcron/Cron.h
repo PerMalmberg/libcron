@@ -4,6 +4,7 @@
 #include <chrono>
 #include <queue>
 #include <memory>
+#include <mutex>
 #include "Task.h"
 #include "CronClock.h"
 
@@ -21,6 +22,8 @@ namespace libcron
         public:
 
             bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
+            void remove_schedules();
+            void remove_schedule(std::string name);
 
             size_t count() const
             {
@@ -55,7 +58,12 @@ namespace libcron
                     // Priority queue placing smallest (i.e. nearest in time) items on top.
                     : public std::priority_queue<Task, std::vector<Task>, std::greater<>>
             {
+                private:
+                    std::mutex m;
+                    std::unique_lock<std::mutex> lock;
                 public:
+                    Queue() : lock(m, std::defer_lock) { }
+
                     // Inherit to allow access to the container.
                     const std::vector<Task>& get_tasks() const
                     {
@@ -65,6 +73,50 @@ namespace libcron
                     std::vector<Task>& get_tasks()
                     {
                         return c;
+                    }
+
+                    void clear()
+                    {
+                        lock.lock();
+
+                        while (!empty())
+                            pop();
+
+                        lock.unlock();
+                    }
+
+                    template<typename T>
+                    void remove(T to_remove)
+                    {
+                        lock.lock();
+
+                        /* Copy current elements */
+                        std::vector<Task> temp = c;
+
+                        /* Clear the Container */
+                        while (!empty())
+                            pop();
+
+                        /* Refill with elements ensuring correct order by calling push */
+                        for (const auto& task : temp)
+                        {
+                            if (task != to_remove)
+                                push(task);
+                        }
+
+                        lock.unlock();
+                    }
+
+                    void lock_queue()
+                    {
+                        /* Do not allow to manipulate the Queue */
+                        lock.lock();
+                    }
+
+                    void release_queue()
+                    {
+                        /* Allow Access to the Queue Manipulating-Functions */
+                        lock.unlock();
                     }
             };
 
@@ -93,6 +145,18 @@ namespace libcron
     }
 
     template<typename ClockType>
+    void Cron<ClockType>::remove_schedules()
+    {
+        tasks.clear();
+    }
+    
+    template<typename ClockType>
+    void Cron<ClockType>::remove_schedule(std::string name)
+    {
+        tasks.remove(name);
+    }
+
+    template<typename ClockType>
     std::chrono::system_clock::duration Cron<ClockType>::time_until_next() const
     {
         std::chrono::system_clock::duration d{};
@@ -111,6 +175,7 @@ namespace libcron
     template<typename ClockType>
     size_t Cron<ClockType>::tick(std::chrono::system_clock::time_point now)
     {
+        tasks.lock_queue();
         size_t res = 0;
 
         if(!first_tick)
@@ -189,6 +254,7 @@ namespace libcron
             }
         });
 
+        tasks.release_queue();
         return res;
     }
 

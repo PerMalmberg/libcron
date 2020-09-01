@@ -55,3 +55,23 @@ namespace libcron
             std::chrono::system_clock::time_point last_run = std::numeric_limits<std::chrono::system_clock::time_point>::min();
     };
 }
+
+inline bool operator==(const std::string &lhs, const libcron::Task &rhs)
+{
+    return lhs == rhs.get_name();
+}
+
+inline bool operator==(const libcron::Task &lhs, const std::string &rhs)
+{
+    return lhs.get_name() == rhs;
+}
+
+inline bool operator!=(const std::string &lhs, const libcron::Task &rhs)
+{
+    return lhs != rhs.get_name();
+}
+
+inline bool operator!=(const libcron::Task &lhs, const std::string &rhs)
+{
+    return lhs.get_name() != rhs;
+}
