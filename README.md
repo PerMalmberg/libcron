@@ -1,7 +1,67 @@
 # libcron
 A C++ scheduling library using cron formatting.
 
-# Local time vs UTC
+# Using the Scheduler
+
+Libcron offers an easy to use API to add callbacks with corresponding cron-formatted strings:
+
+```
+libcron::Cron cron;
+
+cron.add_schedule("Hello from Cron", "* * * * * ?", [=]() {
+	std::cout << "Hello from libcron!" std::endl;
+});
+```
+
+To trigger the execution of callbacks, one must call `libcron::Cron::tick` at least once a second to prevent missing schedules:
+
+```
+while(true)
+{
+	cron.tick();
+	std::this_thread::sleep_for(500mS);
+}
+```
+
+
+
+## Removing schedules from `libcron::Cron`
+
+libcron::Cron offers two convenient functions to remove schedules:
+
+- `clear_schedules()` will remove all schedules
+- `remove_schedule(std::string)` will remove a specific schedule
+
+For example, `cron.remove_schedule("Hello from Cron")` will remove the previously added task.
+
+
+
+## Removing/Adding tasks at runtime in a multithreaded environment
+
+When Calling `libcron::Cron::tick` from another thread than `add_schedule`, `clear_schedule` and `remove_schedule`, one must take care to protect the internal resources of `libcron::Cron` so that tasks are not removed or added while `libcron::Cron` is iterating over the schedules. `libcron::Cron` can take care of that, you simply have to define your own aliases:
+
+```
+/* The default class uses NullLock, which does not lock the resources at runtime */
+template<typename ClockType = libcron::LocalClock, typename LockType = libcron::NullLock>
+class Cron
+{
+	...
+}
+
+/* Define an alias for a thread-safe Cron scheduler which automatically locks ressources when needed */ 
+using CronMt = libcron::Cron<libcron::LocalClock, libcron::Locker>
+
+CronMt cron;
+cron.add_schedule("Hello from Cron", "* * * * * ?", [=]() {
+	std::cout << "Hello from CronMt!" std::endl;
+});
+
+....
+```
+
+However, this comes with costs: Whenever you call `tick`, a `std::mutex` will be locked and unlocked.  So only use the `libcron::Locker` to protect resources when you really need too.
+
+## Local time vs UTC
 
 This library uses `std::chrono::system_clock::timepoint` as its time unit. While that is UTC by default, the Cron-class
 uses a `LocalClock` by default which offsets `system_clock::now()` by the current UTC-offset. If you wish to work in
@@ -55,6 +115,7 @@ Each part is separated by one or more whitespaces. It is thus important to keep 
 * Invalid:
   * 0, 3, 40-50 * * * * ?
   
+
 `Day of month` and `day of week` are mutually exclusive so one of them must at always be ignored using
 the '?'-character to ensure that it is not possible to specify a statement which results in an impossible mix of these fields. 
 
@@ -86,4 +147,3 @@ when using randomization, i.e. mutual exclusiveness and no extra spaces.
 # Used Third party libraries
 
 Howard Hinnant's [date libraries](https://github.com/HowardHinnant/date/)
-

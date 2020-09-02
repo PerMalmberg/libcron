@@ -335,3 +335,70 @@ SCENARIO("Multiple ticks per second")
     }
 
 }
+
+SCENARIO("Tasks can be added and removed from the scheduler")
+{
+    GIVEN("A Cron instance with no task")
+    {
+        Cron<> c;
+        auto expired = false;
+
+        WHEN("Adding 5 tasks that runs every second")
+        {
+            REQUIRE(c.add_schedule("Task-1", "* * * * * ?",
+                                   [&expired]()
+                                   {
+                                       expired = true;
+                                   })
+            );
+
+            REQUIRE(c.add_schedule("Task-2", "* * * * * ?",
+                                   [&expired]()
+                                   {
+                                       expired = true;
+                                   })
+            );
+
+            REQUIRE(c.add_schedule("Task-3", "* * * * * ?",
+                                   [&expired]()
+                                   {
+                                       expired = true;
+                                   })
+            );
+
+            REQUIRE(c.add_schedule("Task-4", "* * * * * ?",
+                                   [&expired]()
+                                   {
+                                       expired = true;
+                                   })
+            );
+
+            REQUIRE(c.add_schedule("Task-5", "* * * * * ?",
+                                   [&expired]()
+                                   {
+                                       expired = true;
+                                   })
+            );
+
+            THEN("Count is 5")
+            {
+                REQUIRE(c.count() == 5);
+            }
+            AND_THEN("Removing all scheduled tasks")
+            {
+                c.clear_schedules();
+                REQUIRE(c.count() == 0);
+            }
+            AND_THEN("Removing a task that does not exist")
+            {
+                c.remove_schedule("Task-6");
+                REQUIRE(c.count() == 5);
+            }
+            AND_THEN("Removing a task that does exist")
+            {
+                c.remove_schedule("Task-5");
+                REQUIRE(c.count() == 4);
+            }
+        }
+    }
+}
