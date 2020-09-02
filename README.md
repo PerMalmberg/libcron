@@ -42,14 +42,14 @@ When Calling `libcron::Cron::tick` from another thread than `add_schedule`, `cle
 
 ```
 /* The default class uses NullLock, which does not lock the resources at runtime */
-template<typename ClockType = libcron::LocalClock, typename TaskLockType = libcron::TaskLockerNone>
+template<typename ClockType = libcron::LocalClock, typename LockType = libcron::NullLock>
 class Cron
 {
 	...
 }
 
-/* To define an alias for a thread-safe Cron scheduler automatically locking ressources when needed */ 
-using CronMt = libcron::Cron<libcron::LocalClock, libcron::TaskLocker>
+/* Define an alias for a thread-safe Cron scheduler which automatically locks ressources when needed */ 
+using CronMt = libcron::Cron<libcron::LocalClock, libcron::Locker>
 
 CronMt cron;
 cron.add_schedule("Hello from Cron", "* * * * * ?", [=]() {
@@ -59,7 +59,7 @@ cron.add_schedule("Hello from Cron", "* * * * * ?", [=]() {
 ....
 ```
 
-However, this comes with costs: Whenever you call `tick`, a `std::mutex` will be locked and unlocked.  So only use the `TaskLocker` to protect resources when you really need too.
+However, this comes with costs: Whenever you call `tick`, a `std::mutex` will be locked and unlocked.  So only use the `libcron::Locker` to protect resources when you really need too.
 
 ## Local time vs UTC
 
