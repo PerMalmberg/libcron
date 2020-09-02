@@ -10,20 +10,38 @@
 
 namespace libcron
 {
-    template<typename ClockType>
+    class TaskLockerNone 
+    {
+        public:
+            void lock() {}
+            void unlock() {}
+    };
+
+    class TaskLocker
+    {
+        public:
+            TaskLocker() : lck(m, std::defer_lock) {}
+            void lock() { lck.lock(); }
+            void unlock() { lck.unlock(); }
+        private:
+            std::mutex m{};
+            std::unique_lock<std::mutex> lck;
+    };
+
+    template<typename ClockType, typename TaskLockType>
     class Cron;
 
-    template<typename ClockType>
-    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType>& c);
+    template<typename ClockType, typename TaskLockType>
+    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, TaskLockType>& c);
 
-    template<typename ClockType = libcron::LocalClock>
+    template<typename ClockType = libcron::LocalClock, typename TaskLockType = libcron::TaskLockerNone>
     class Cron
     {
         public:
 
             bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
             void clear_schedules();
-            void remove_schedule(std::string name);
+            void remove_schedule(const std::string& name);
 
             size_t count() const
             {
@@ -51,19 +69,14 @@ namespace libcron
             void get_time_until_expiry_for_tasks(
                     std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status) const;
 
-            friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType>& c);
+            friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType, TaskLockType>& c);
 
         private:
             class Queue
                     // Priority queue placing smallest (i.e. nearest in time) items on top.
                     : public std::priority_queue<Task, std::vector<Task>, std::greater<>>
             {
-                private:
-                    std::mutex m;
-                    std::unique_lock<std::mutex> lock;
                 public:
-                    Queue() : lock(m, std::defer_lock) { }
-
                     // Inherit to allow access to the container.
                     const std::vector<Task>& get_tasks() const
                     {
@@ -115,6 +128,9 @@ namespace libcron
                         /* Allow Access to the Queue Manipulating-Functions */
                         lock.unlock();
                     }
+                    
+                private:
+                    TaskLockType lock;
             };
 
 
@@ -124,37 +140,39 @@ namespace libcron
             std::chrono::system_clock::time_point last_tick{};
     };
 
-    template<typename ClockType>
-    bool Cron<ClockType>::add_schedule(std::string name, const std::string& schedule, std::function<void()> work)
+    template<typename ClockType, typename TaskLockType>
+    bool Cron<ClockType, TaskLockType>::add_schedule(std::string name, const std::string& schedule, std::function<void()> work)
     {
         auto cron = CronData::create(schedule);
         bool res = cron.is_valid();
         if (res)
         {
+            tasks.lock_queue();
             Task t{std::move(name), CronSchedule{cron}, std::move(work)};
             if (t.calculate_next(clock.now()))
             {
                 tasks.push(t);
             }
+            tasks.release_queue();
         }
 
         return res;
     }
 
-    template<typename ClockType>
-    void Cron<ClockType>::remove_schedules()
+    template<typename ClockType, typename TaskLockType>
+    void Cron<ClockType, TaskLockType>::clear_schedules()
     {
         tasks.clear();
     }
     
-    template<typename ClockType>
-    void Cron<ClockType>::remove_schedule(const std::string& name)
+    template<typename ClockType, typename TaskLockType>
+    void Cron<ClockType, TaskLockType>::remove_schedule(const std::string& name)
     {
         tasks.remove(name);
     }
 
-    template<typename ClockType>
-    std::chrono::system_clock::duration Cron<ClockType>::time_until_next() const
+    template<typename ClockType, typename TaskLockType>
+    std::chrono::system_clock::duration Cron<ClockType, TaskLockType>::time_until_next() const
     {
         std::chrono::system_clock::duration d{};
         if (tasks.empty())
@@ -169,8 +187,8 @@ namespace libcron
         return d;
     }
 
-    template<typename ClockType>
-    size_t Cron<ClockType>::tick(std::chrono::system_clock::time_point now)
+    template<typename ClockType, typename TaskLockType>
+    size_t Cron<ClockType, TaskLockType>::tick(std::chrono::system_clock::time_point now)
     {
         tasks.lock_queue();
         size_t res = 0;
@@ -255,8 +273,8 @@ namespace libcron
         return res;
     }
 
-    template<typename ClockType>
-    void Cron<ClockType>::get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string,
+    template<typename ClockType, typename TaskLockType>
+    void Cron<ClockType, TaskLockType>::get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string,
                                                           std::chrono::system_clock::duration>>& status) const
     {
         auto now = clock.now();
@@ -269,8 +287,8 @@ namespace libcron
                       });
     }
 
-    template<typename ClockType>
-    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType>& c)
+    template<typename ClockType, typename TaskLockType>
+    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, TaskLockType>& c)
     {
         std::for_each(c.tasks.get_tasks().cbegin(), c.tasks.get_tasks().cend(),
                       [&stream, &c](const Task& t)

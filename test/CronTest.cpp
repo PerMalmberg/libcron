@@ -386,7 +386,7 @@ SCENARIO("Tasks can be added and removed from the scheduler")
             }
             AND_THEN("Removing all scheduled tasks")
             {
-                c.remove_schedules();
+                c.clear_schedules();
                 REQUIRE(c.count() == 0);
             }
             AND_THEN("Removing a task that does not exist")
