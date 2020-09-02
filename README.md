@@ -41,7 +41,7 @@ For example, `cron.remove_schedule("Hello from Cron")` will remove the previousl
 When Calling `libcron::Cron::tick` from another thread than `add_schedule`, `clear_schedule` and `remove_schedule`, one must take care to protect the internal resources of `libcron::Cron` so that tasks are not removed or added while `libcron::Cron` is iterating over the schedules. `libcron::Cron` can take care of that, you simply have to define your own aliases:
 
 ```
-/* The defaut class uses TaskLockerNone, which does no lock the ressources at runtime */
+/* The default class uses NullLock, which does not lock the resources at runtime */
 template<typename ClockType = libcron::LocalClock, typename TaskLockType = libcron::TaskLockerNone>
 class Cron
 {
@@ -147,4 +147,3 @@ when using randomization, i.e. mutual exclusiveness and no extra spaces.
 # Used Third party libraries
 
 Howard Hinnant's [date libraries](https://github.com/HowardHinnant/date/)
-

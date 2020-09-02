@@ -10,14 +10,14 @@
 
 namespace libcron
 {
-    class TaskLockerNone 
+    class NullLock 
     {
         public:
             void lock() {}
             void unlock() {}
     };
 
-    class TaskLocker
+    class Locker
     {
         public:
             TaskLocker() : lck(m, std::defer_lock) {}
@@ -31,7 +31,7 @@ namespace libcron
     template<typename ClockType, typename TaskLockType>
     class Cron;
 
-    template<typename ClockType, typename TaskLockType>
+    template<typename ClockType, typename LockType>
     std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, TaskLockType>& c);
 
     template<typename ClockType = libcron::LocalClock, typename TaskLockType = libcron::TaskLockerNone>
