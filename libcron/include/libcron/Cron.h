@@ -118,16 +118,6 @@ namespace libcron
                         lock.unlock();
                     }
 
-                    template<typename T>
-                    bool find(const T& to_find, Task& task)
-                    {
-                        task = c.find(to_find);
-                        if (task == c.end())
-                            return false;
-                        else
-                            return true;
-                    }
-
                     void lock_queue()
                     {
                         /* Do not allow to manipulate the Queue */
@@ -154,9 +144,12 @@ namespace libcron
     template<typename ClockType, typename LockType>
     bool Cron<ClockType, LockType>::was_executed_on_time(const std::string& name)
     {
-        Task t;
-        if (tasks.find(name, t))
-            return t.last_run_was_on_time;
+        tasks.lock_queue();
+        std::vector<Task>& tvec = tasks.get_tasks();
+        auto it = std::find_if(tvec.begin(), tvec.end(), [&name](const Task& T){return T.get_name() == name; });
+        tasks.release_queue();
+        if (it != tvec.end())
+            return it->executed_on_time();
         else
             return false;
     }

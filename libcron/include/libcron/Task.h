@@ -21,13 +21,13 @@ namespace libcron
             {
                 // Next Schedule is still the current schedule, check if execution was on time (within 1 second) 
                 using namespace std::chrono_literals;
-                was_executed_on_time = (now > (next_schedule + 1s));
-
+                was_executed_on_time = (now <= (next_schedule + 1s));
+                
                 last_run = now;
                 task();
             }
 
-            bool executed_on_time()
+            bool executed_on_time() const
             {
                 return was_executed_on_time;
             }

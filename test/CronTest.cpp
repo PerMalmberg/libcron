@@ -99,6 +99,84 @@ SCENARIO("Adding a task that expires in the future")
     }
 }
 
+SCENARIO("Task on-time check")
+{
+    GIVEN("A Cron instance with one task expiring in  2 seconds, but taking 3 seconds to execute")
+    {
+        auto _2_second_expired = 0;
+
+        Cron<> c;
+        REQUIRE(c.add_schedule("Two",
+                               "*/2 * * * * ?",
+                               [&_2_second_expired]()
+                               {
+                                   _2_second_expired++;
+                                   std::this_thread::sleep_for(3s);
+                               })
+        );
+        THEN("Not yet expired")
+        {
+            REQUIRE_FALSE(_2_second_expired);
+            REQUIRE_FALSE(c.was_executed_on_time("Two"));
+        }
+        WHEN("Exactly schedule task")
+        {
+            while (_2_second_expired == 0)
+                c.tick();
+
+            THEN("Task should have expired within a valid time")
+            {
+                REQUIRE(_2_second_expired == 1);
+                REQUIRE(c.was_executed_on_time("Two"));
+            }
+            AND_THEN("Executing another tick again, leading to execute task again immediatly, but not on time.")
+            {
+                c.tick();
+                REQUIRE(_2_second_expired == 2);
+                REQUIRE_FALSE(c.was_executed_on_time("Two"));
+            }
+        }
+    }
+    GIVEN("A Cron Task scheduled every second taking almost zero time to execute")
+    {
+        auto _0_second_expired = 0;
+        Cron<> c;
+        REQUIRE(c.add_schedule("Zero",
+                               "*/1 * * * * ?",
+                               [&_0_second_expired]()
+                               {
+                                   _0_second_expired++;
+                               })
+        );
+        THEN("Not yet expired")
+        {
+            REQUIRE_FALSE(_0_second_expired);
+            REQUIRE_FALSE(c.was_executed_on_time("Zero"));
+        }
+        WHEN("Exactly schedule task")
+        {
+            while (_0_second_expired == 0)
+                c.tick();
+
+            THEN("Task should have expired within a valid time")
+            {
+                REQUIRE(_0_second_expired == 1);
+                REQUIRE(c.was_executed_on_time("Zero"));
+            }
+        }
+        WHEN("Dismissing tick due to slow calling thread.")
+        {
+            THEN("Task is called, but not within a valid time.")
+            {
+                std::this_thread::sleep_for(2s);
+                c.tick();
+                REQUIRE(_0_second_expired == 1);
+                REQUIRE_FALSE(c.was_executed_on_time("Zero"));
+            }
+        }
+    }
+}
+
 SCENARIO("Task priority")
 {
     GIVEN("A Cron instance with two tasks expiring in 3 and 5 seconds, added in 'reverse' order")
