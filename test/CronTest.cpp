@@ -101,6 +101,8 @@ SCENARIO("Adding a task that expires in the future")
 
 SCENARIO("Task on-time check")
 {
+    using namespace std::chrono_literals;
+
     GIVEN("A Cron instance with one task expiring in  2 seconds, but taking 3 seconds to execute")
     {
         auto _2_second_expired = 0;
@@ -117,7 +119,7 @@ SCENARIO("Task on-time check")
         THEN("Not yet expired")
         {
             REQUIRE_FALSE(_2_second_expired);
-            REQUIRE_FALSE(c.was_executed_on_time("Two"));
+            REQUIRE(c.get_delay("Two") <= 0s);
         }
         WHEN("Exactly schedule task")
         {
@@ -127,31 +129,37 @@ SCENARIO("Task on-time check")
             THEN("Task should have expired within a valid time")
             {
                 REQUIRE(_2_second_expired == 1);
-                REQUIRE(c.was_executed_on_time("Two"));
+                REQUIRE(c.get_delay("Two") <= 1s);
             }
             AND_THEN("Executing another tick again, leading to execute task again immediatly, but not on time.")
             {
                 c.tick();
                 REQUIRE(_2_second_expired == 2);
-                REQUIRE_FALSE(c.was_executed_on_time("Two"));
+                REQUIRE(c.get_delay("Two") >= 1s);
+            }
+            AND_THEN("Delay is negative for unknown tasks.")
+            {
+                REQUIRE(c.get_delay("One") <= 0s);
             }
         }
     }
-    GIVEN("A Cron Task scheduled every second taking almost zero time to execute")
+    GIVEN("A Cron Task scheduled every second taking almost zero time to execute, testing locking behaviour")
     {
         auto _0_second_expired = 0;
-        Cron<> c;
+        Cron<libcron::LocalClock, libcron::Locker> c;
         REQUIRE(c.add_schedule("Zero",
                                "*/1 * * * * ?",
-                               [&_0_second_expired]()
+                               [&_0_second_expired, &c]()
                                {
+                                   // Trying to call get_delay in callback (multiple mutex access)
+                                   c.get_delay("Zero");
                                    _0_second_expired++;
                                })
         );
         THEN("Not yet expired")
         {
             REQUIRE_FALSE(_0_second_expired);
-            REQUIRE_FALSE(c.was_executed_on_time("Zero"));
+            REQUIRE(c.get_delay("Zero") <= 0s);
         }
         WHEN("Exactly schedule task")
         {
@@ -161,7 +169,7 @@ SCENARIO("Task on-time check")
             THEN("Task should have expired within a valid time")
             {
                 REQUIRE(_0_second_expired == 1);
-                REQUIRE(c.was_executed_on_time("Zero"));
+                REQUIRE(c.get_delay("Zero") <= 1s);
             }
         }
         WHEN("Dismissing tick due to slow calling thread.")
@@ -171,7 +179,7 @@ SCENARIO("Task on-time check")
                 std::this_thread::sleep_for(2s);
                 c.tick();
                 REQUIRE(_0_second_expired == 1);
-                REQUIRE_FALSE(c.was_executed_on_time("Zero"));
+                REQUIRE(c.get_delay("Zero") > 1s);
             }
         }
     }

@@ -20,12 +20,10 @@ namespace libcron
     class Locker
     {
         public:
-            Locker() : lck(m, std::defer_lock) {}
-            void lock() { lck.lock(); }
-            void unlock() { lck.unlock(); }
+            void lock() { m.lock(); }
+            void unlock() { m.unlock(); }
         private:
             std::recursive_mutex m{};
-            std::unique_lock<std::recursive_mutex> lck;
     };
 
     template<typename ClockType, typename LockType>
@@ -42,7 +40,9 @@ namespace libcron
             bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
             void clear_schedules();
             void remove_schedule(const std::string& name);
-            bool was_executed_on_time(const std::string& name);
+
+            // Returns the delay between planned and actual execution-timepoint. 
+            std::chrono::system_clock::duration get_delay(const std::string& name);
 
             size_t count() const
             {
@@ -118,6 +118,11 @@ namespace libcron
                         lock.unlock();
                     }
 
+                    std::lock_guard<std::recursive_mutex> get_queue_lock()
+                    {
+
+                    }
+
                     void lock_queue()
                     {
                         /* Do not allow to manipulate the Queue */
@@ -142,16 +147,21 @@ namespace libcron
     };
     
     template<typename ClockType, typename LockType>
-    bool Cron<ClockType, LockType>::was_executed_on_time(const std::string& name)
+    std::chrono::system_clock::duration Cron<ClockType, LockType>::get_delay(const std::string& name)
     {
+        std::chrono::system_clock::duration delay = std::chrono::seconds(-1);
         tasks.lock_queue();
+
         std::vector<Task>& tvec = tasks.get_tasks();
         auto it = std::find_if(tvec.begin(), tvec.end(), [&name](const Task& T){return T.get_name() == name; });
-        tasks.release_queue();
+        
         if (it != tvec.end())
-            return it->executed_on_time();
-        else
-            return false;
+        {
+            delay = it->get_delay();
+        }
+
+        tasks.release_queue();
+        return delay;
     }
 
     template<typename ClockType, typename LockType>
