@@ -24,8 +24,8 @@ namespace libcron
             void lock() { lck.lock(); }
             void unlock() { lck.unlock(); }
         private:
-            std::mutex m{};
-            std::unique_lock<std::mutex> lck;
+            std::recursive_mutex m{};
+            std::unique_lock<std::recursive_mutex> lck;
     };
 
     template<typename ClockType, typename LockType>
