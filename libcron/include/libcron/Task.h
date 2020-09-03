@@ -19,8 +19,17 @@ namespace libcron
 
             void execute(std::chrono::system_clock::time_point now)
             {
+                // Next Schedule is still the current schedule, check if execution was on time (within 1 second) 
+                using namespace std::chrono_literals;
+                was_executed_on_time = (now > (next_schedule + 1s));
+
                 last_run = now;
                 task();
+            }
+
+            bool executed_on_time()
+            {
+                return was_executed_on_time;
             }
 
             Task(const Task& other) = default;
@@ -52,6 +61,7 @@ namespace libcron
             std::chrono::system_clock::time_point next_schedule;
             std::function<void()> task;
             bool valid = false;
+            bool was_executed_on_time = false;
             std::chrono::system_clock::time_point last_run = std::numeric_limits<std::chrono::system_clock::time_point>::min();
     };
 }

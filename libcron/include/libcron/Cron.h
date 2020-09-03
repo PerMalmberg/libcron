@@ -42,6 +42,7 @@ namespace libcron
             bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
             void clear_schedules();
             void remove_schedule(const std::string& name);
+            bool was_executed_on_time(const std::string& name);
 
             size_t count() const
             {
@@ -117,6 +118,16 @@ namespace libcron
                         lock.unlock();
                     }
 
+                    template<typename T>
+                    bool find(const T& to_find, Task& task)
+                    {
+                        task = c.find(to_find);
+                        if (task == c.end())
+                            return false;
+                        else
+                            return true;
+                    }
+
                     void lock_queue()
                     {
                         /* Do not allow to manipulate the Queue */
@@ -139,6 +150,16 @@ namespace libcron
             bool first_tick = true;
             std::chrono::system_clock::time_point last_tick{};
     };
+    
+    template<typename ClockType, typename LockType>
+    bool Cron<ClockType, LockType>::was_executed_on_time(const std::string& name)
+    {
+        Task t;
+        if (tasks.find(name, t))
+            return t.last_run_was_on_time;
+        else
+            return false;
+    }
 
     template<typename ClockType, typename LockType>
     bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, std::function<void()> work)
