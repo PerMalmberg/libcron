@@ -118,11 +118,6 @@ namespace libcron
                         lock.unlock();
                     }
 
-                    std::lock_guard<std::recursive_mutex> get_queue_lock()
-                    {
-
-                    }
-
                     void lock_queue()
                     {
                         /* Do not allow to manipulate the Queue */
