@@ -20,6 +20,73 @@ std::string create_schedule_expiring_in(std::chrono::system_clock::time_point no
     return res;
 }
 
+void callback_without_context()
+{
+
+}
+
+void callback_with_context(libcron::TaskContext& ctx)
+{
+    auto delay = ctx.get_delay();
+}
+
+SCENARIO("Different callback implementation")
+{
+    GIVEN("A Cron instance with different tasks expiring after one second")
+    {
+        Cron<> c;
+        auto expired_lambda_with_capture = false;
+        auto expired_lambda_with_capture_and_context = false;
+
+        REQUIRE(c.add_schedule("A lambda with capture and no context",
+                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
+                               [&expired_lambda_with_capture]()
+                               {
+                                   expired_lambda_with_capture = true;
+                               })
+        );
+
+        REQUIRE(c.add_schedule("A lambda with capture and context",
+                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
+                               [&expired_lambda_with_capture_and_context](libcron::TaskContext& ctx)
+                               {
+                                   auto delay = ctx.get_delay();
+                                   expired_lambda_with_capture_and_context = true;
+                               })
+        );
+
+        REQUIRE(c.add_schedule("A lambda without capture and no context",
+                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
+                               []()
+                               {
+                               })
+        );
+
+        REQUIRE(c.add_schedule("A lambda without capture and context",
+                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
+                               [](libcron::TaskContext& ctx)
+                               {
+                                   auto delay = ctx.get_delay();
+                               })
+        );
+
+        REQUIRE(c.add_schedule("A function-style pointer and no context",
+                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
+                               callback_without_context)
+        );
+
+        REQUIRE(c.add_schedule("A function-style pointer and context",
+                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
+                               callback_with_context)
+        );
+
+        std::this_thread::sleep_for(1s);
+        REQUIRE(c.tick() == 6);
+        REQUIRE(expired_lambda_with_capture);
+        REQUIRE(expired_lambda_with_capture_and_context);
+    }
+}
+
 SCENARIO("Adding a task")
 {
     GIVEN("A Cron instance with no task")

@@ -1,10 +1,11 @@
 #pragma once
 
 #include <functional>
-#include "CronData.h"
-#include "CronSchedule.h"
 #include <chrono>
 #include <utility>
+#include "CronData.h"
+#include "CronSchedule.h"
+#include "TaskContext.h"
 
 namespace libcron
 {
@@ -12,7 +13,7 @@ namespace libcron
     {
         public:
 
-            Task(std::string name, const CronSchedule schedule, std::function<void()> task)
+            Task(std::string name, const CronSchedule schedule, TaskContext task)
                     : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
             {
             }
@@ -23,7 +24,7 @@ namespace libcron
                 delay = now - next_schedule;
 
                 last_run = now;
-                task();
+                task(this);
             }
 
             std::chrono::system_clock::duration get_delay() const
@@ -59,7 +60,7 @@ namespace libcron
             CronSchedule schedule;
             std::chrono::system_clock::time_point next_schedule;
             std::chrono::system_clock::duration delay = std::chrono::seconds(-1);
-            std::function<void()> task;
+            TaskContext task;
             bool valid = false;
             std::chrono::system_clock::time_point last_run = std::numeric_limits<std::chrono::system_clock::time_point>::min();
     };

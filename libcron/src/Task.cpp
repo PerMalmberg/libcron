@@ -1,4 +1,3 @@
-#include <iostream>
 #include "libcron/Task.h"
 
 using namespace std::chrono;

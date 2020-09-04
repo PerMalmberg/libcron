@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include "Task.h"
+#include "TaskContext.h"
 #include "CronClock.h"
 
 namespace libcron
@@ -37,7 +38,24 @@ namespace libcron
     {
         public:
 
-            bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
+            template<typename WorkType>
+            bool add_schedule(std::string name, const std::string& schedule, WorkType work)
+            {
+                auto cron = CronData::create(schedule);
+                bool res = cron.is_valid();
+                if (res)
+                {
+                    tasks.lock_queue();
+                    Task t{std::move(name), CronSchedule{cron}, TaskContext(work)};
+                    if (t.calculate_next(clock.now()))
+                    {
+                        tasks.push(t);
+                    }
+                tasks.release_queue();
+                }
+                return res;
+            }
+
             void clear_schedules();
             void remove_schedule(const std::string& name);
 
@@ -157,25 +175,6 @@ namespace libcron
 
         tasks.release_queue();
         return delay;
-    }
-
-    template<typename ClockType, typename LockType>
-    bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, std::function<void()> work)
-    {
-        auto cron = CronData::create(schedule);
-        bool res = cron.is_valid();
-        if (res)
-        {
-            tasks.lock_queue();
-            Task t{std::move(name), CronSchedule{cron}, std::move(work)};
-            if (t.calculate_next(clock.now()))
-            {
-                tasks.push(t);
-            }
-            tasks.release_queue();
-        }
-
-        return res;
     }
 
     template<typename ClockType, typename LockType>
