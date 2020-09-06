@@ -39,7 +39,7 @@ namespace libcron
     {
         public:
 
-            bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
+            bool add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work);
             void clear_schedules();
             void remove_schedule(const std::string& name);
 
@@ -141,7 +141,7 @@ namespace libcron
     };
 
     template<typename ClockType, typename LockType>
-    bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, std::function<void()> work)
+    bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work)
     {
         auto cron = CronData::create(schedule);
         bool res = cron.is_valid();

@@ -8,7 +8,7 @@ Libcron offers an easy to use API to add callbacks with corresponding cron-forma
 ```
 libcron::Cron cron;
 
-cron.add_schedule("Hello from Cron", "* * * * * ?", [=]() {
+cron.add_schedule("Hello from Cron", "* * * * * ?", [](*/std::chrono::system_clock::duration delayed_by*/) {
 	std::cout << "Hello from libcron!" std::endl;
 });
 ```
@@ -23,8 +23,6 @@ while(true)
 }
 ```
 
-
-
 ## Removing schedules from `libcron::Cron`
 
 libcron::Cron offers two convenient functions to remove schedules:
@@ -33,8 +31,6 @@ libcron::Cron offers two convenient functions to remove schedules:
 - `remove_schedule(std::string)` will remove a specific schedule
 
 For example, `cron.remove_schedule("Hello from Cron")` will remove the previously added task.
-
-
 
 ## Removing/Adding tasks at runtime in a multithreaded environment
 
@@ -52,7 +48,7 @@ class Cron
 using CronMt = libcron::Cron<libcron::LocalClock, libcron::Locker>
 
 CronMt cron;
-cron.add_schedule("Hello from Cron", "* * * * * ?", [=]() {
+cron.add_schedule("Hello from Cron", "* * * * * ?", []() {
 	std::cout << "Hello from CronMt!" std::endl;
 });
 

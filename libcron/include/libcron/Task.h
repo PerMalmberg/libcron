@@ -11,16 +11,18 @@ namespace libcron
     class Task
     {
         public:
+            using TaskFunction = std::function<void(std::chrono::system_clock::duration)>;
 
-            Task(std::string name, const CronSchedule schedule, std::function<void()> task)
+            Task(std::string name, CronSchedule schedule, TaskFunction task)
                     : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
             {
             }
 
             void execute(std::chrono::system_clock::time_point now)
             {
+                auto delay = now - last_run;
                 last_run = now;
-                task();
+                task(delay);
             }
 
             Task(const Task& other) = default;
@@ -50,7 +52,7 @@ namespace libcron
             std::string name;
             CronSchedule schedule;
             std::chrono::system_clock::time_point next_schedule;
-            std::function<void()> task;
+            TaskFunction task;
             bool valid = false;
             std::chrono::system_clock::time_point last_run = std::numeric_limits<std::chrono::system_clock::time_point>::min();
     };

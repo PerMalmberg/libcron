@@ -35,7 +35,7 @@ SCENARIO("Adding a task")
         WHEN("Adding a task that runs every second")
         {
             REQUIRE(c.add_schedule("A task", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
@@ -68,7 +68,7 @@ SCENARIO("Adding a task that expires in the future")
         Cron<> c;
         REQUIRE(c.add_schedule("A task",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{3}),
-                               [&expired]()
+                               [&expired](auto)
                                {
                                    expired = true;
                                })
@@ -110,7 +110,7 @@ SCENARIO("Task priority")
         Cron<> c;
         REQUIRE(c.add_schedule("Five",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{5}),
-                               [&_5_second_expired]()
+                               [&_5_second_expired](auto)
                                {
                                    _5_second_expired++;
                                })
@@ -118,7 +118,7 @@ SCENARIO("Task priority")
 
         REQUIRE(c.add_schedule("Three",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{3}),
-                               [&_3_second_expired]()
+                               [&_3_second_expired](auto)
                                {
                                    _3_second_expired++;
                                })
@@ -231,7 +231,7 @@ SCENARIO("Clock changes")
         clock.set(sys_days{2018_y / 05 / 05});
 
         // Every hour
-        REQUIRE(c.add_schedule("Clock change task", "0 0 * * * ?", []()
+        REQUIRE(c.add_schedule("Clock change task", "0 0 * * * ?", [](auto)
         {
         })
         );
@@ -309,7 +309,7 @@ SCENARIO("Multiple ticks per second")
     int run_count = 0;
 
     // Every 10 seconds
-    REQUIRE(c.add_schedule("Clock change task", "*/10 0 * * * ?", [&run_count]()
+    REQUIRE(c.add_schedule("Clock change task", "*/10 0 * * * ?", [&run_count](auto)
     {
         run_count++;
     })
@@ -333,7 +333,25 @@ SCENARIO("Multiple ticks per second")
         }
 
     }
+}
 
+SCENARIO("Delayed run")
+{
+    Cron<TestClock> c{};
+    auto& clock = c.get_clock();
+
+    auto now = sys_days{ 2018_y / 05 / 05 };
+    clock.set(now);
+
+    // 3 seconds past the minute
+    REQUIRE(c.add_schedule("Task that expires every 3 seconds", "3 * * * * ?", [](auto delayed_by)
+        {
+            // At four past the original time we're a second late.
+            REQUIRE(delayed_by >= seconds{ 1 });
+        })
+    );
+
+    c.tick(now + seconds{ 4 });
 }
 
 SCENARIO("Tasks can be added and removed from the scheduler")
@@ -346,35 +364,35 @@ SCENARIO("Tasks can be added and removed from the scheduler")
         WHEN("Adding 5 tasks that runs every second")
         {
             REQUIRE(c.add_schedule("Task-1", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-2", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-3", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-4", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-5", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
