@@ -6,7 +6,6 @@
 #include <memory>
 #include <mutex>
 #include "Task.h"
-#include "TaskContext.h"
 #include "CronClock.h"
 
 namespace libcron
@@ -37,7 +36,6 @@ namespace libcron
     class Cron
     {
         public:
-
             template<typename WorkType>
             bool add_schedule(std::string name, const std::string& schedule, WorkType work)
             {
@@ -46,13 +44,14 @@ namespace libcron
                 if (res)
                 {
                     tasks.lock_queue();
-                    Task t{std::move(name), CronSchedule{cron}, TaskContext(work)};
+                    Task t{std::move(name), CronSchedule{cron}, Task::TaskProxy(work) };
                     if (t.calculate_next(clock.now()))
                     {
                         tasks.push(t);
                     }
-                tasks.release_queue();
+                    tasks.release_queue();
                 }
+
                 return res;
             }
 

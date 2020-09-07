@@ -22,8 +22,7 @@ add_library(${PROJECT_NAME}
 		src/CronData.cpp
 		src/CronRandomization.cpp
 		src/CronSchedule.cpp
-		src/Task.cpp
-		src/TaskContext.cpp)
+		src/Task.cpp)
 
 target_include_directories(${PROJECT_NAME}
 		PRIVATE ${CMAKE_CURRENT_LIST_DIR}/externals/date/include

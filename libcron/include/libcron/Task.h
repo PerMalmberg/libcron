@@ -5,15 +5,40 @@
 #include <utility>
 #include "CronData.h"
 #include "CronSchedule.h"
-#include "TaskContext.h"
 
 namespace libcron
 {
-    class Task
+    class TaskInterface
     {
         public:
+            virtual ~TaskInterface() {}
+            virtual std::chrono::system_clock::duration get_delay() const 
+            { 
+                using namespace std::chrono_literals;
+                return std::chrono::system_clock::duration(-1s);
+            };
+    };
 
-            Task(std::string name, const CronSchedule schedule, TaskContext task)
+    class Task : public TaskInterface
+    {
+        public:
+            using TaskFunction = std::function<void(const TaskInterface&)>;
+
+            class TaskProxy
+            {
+                public:
+                TaskProxy(TaskFunction task) : task(std::move(task)) {}
+
+                void operator() (const TaskInterface& i)
+                {
+                    task(i);
+                }
+
+                private:
+                TaskFunction task;
+            };
+
+            Task(std::string name, const CronSchedule schedule, TaskProxy task)
                     : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
             {
             }
@@ -24,7 +49,7 @@ namespace libcron
                 delay = now - next_schedule;
 
                 last_run = now;
-                task(this);
+                task(*this);
             }
 
             std::chrono::system_clock::duration get_delay() const
@@ -60,7 +85,7 @@ namespace libcron
             CronSchedule schedule;
             std::chrono::system_clock::time_point next_schedule;
             std::chrono::system_clock::duration delay = std::chrono::seconds(-1);
-            TaskContext task;
+            TaskProxy task;
             bool valid = false;
             std::chrono::system_clock::time_point last_run = std::numeric_limits<std::chrono::system_clock::time_point>::min();
     };

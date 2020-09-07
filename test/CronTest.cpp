@@ -20,14 +20,14 @@ std::string create_schedule_expiring_in(std::chrono::system_clock::time_point no
     return res;
 }
 
-void callback_without_context()
+void callback_without_context(const libcron::TaskInterface&)
 {
 
 }
 
-void callback_with_context(libcron::TaskContext& ctx)
+void callback_with_context(const libcron::TaskInterface& i)
 {
-    auto delay = ctx.get_delay();
+    auto delay = i.get_delay();
 }
 
 SCENARIO("Different callback implementation")
@@ -40,7 +40,7 @@ SCENARIO("Different callback implementation")
 
         REQUIRE(c.add_schedule("A lambda with capture and no context",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               [&expired_lambda_with_capture]()
+                               [&expired_lambda_with_capture](auto)
                                {
                                    expired_lambda_with_capture = true;
                                })
@@ -48,25 +48,25 @@ SCENARIO("Different callback implementation")
 
         REQUIRE(c.add_schedule("A lambda with capture and context",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               [&expired_lambda_with_capture_and_context](libcron::TaskContext& ctx)
+                               [&expired_lambda_with_capture_and_context](auto i)
                                {
-                                   auto delay = ctx.get_delay();
+                                   auto delay = i.get_delay();
                                    expired_lambda_with_capture_and_context = true;
                                })
         );
 
         REQUIRE(c.add_schedule("A lambda without capture and no context",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               []()
+                               [](auto)
                                {
                                })
         );
 
         REQUIRE(c.add_schedule("A lambda without capture and context",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               [](libcron::TaskContext& ctx)
+                               [](auto i)
                                {
-                                   auto delay = ctx.get_delay();
+                                   auto delay = i.get_delay();
                                })
         );
 
@@ -102,7 +102,7 @@ SCENARIO("Adding a task")
         WHEN("Adding a task that runs every second")
         {
             REQUIRE(c.add_schedule("A task", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
@@ -135,7 +135,7 @@ SCENARIO("Adding a task that expires in the future")
         Cron<> c;
         REQUIRE(c.add_schedule("A task",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{3}),
-                               [&expired]()
+                               [&expired](auto)
                                {
                                    expired = true;
                                })
@@ -177,7 +177,7 @@ SCENARIO("Task on-time check")
         Cron<> c;
         REQUIRE(c.add_schedule("Two",
                                "*/2 * * * * ?",
-                               [&_2_second_expired]()
+                               [&_2_second_expired](auto)
                                {
                                    _2_second_expired++;
                                    std::this_thread::sleep_for(3s);
@@ -216,7 +216,7 @@ SCENARIO("Task on-time check")
         Cron<libcron::LocalClock, libcron::Locker> c;
         REQUIRE(c.add_schedule("Zero",
                                "*/1 * * * * ?",
-                               [&_0_second_expired, &c]()
+                               [&_0_second_expired, &c](auto)
                                {
                                    // Trying to call get_delay in callback (multiple mutex access)
                                    c.get_delay("Zero");
@@ -263,7 +263,7 @@ SCENARIO("Task priority")
         Cron<> c;
         REQUIRE(c.add_schedule("Five",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{5}),
-                               [&_5_second_expired]()
+                               [&_5_second_expired](auto)
                                {
                                    _5_second_expired++;
                                })
@@ -271,7 +271,7 @@ SCENARIO("Task priority")
 
         REQUIRE(c.add_schedule("Three",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{3}),
-                               [&_3_second_expired]()
+                               [&_3_second_expired](auto)
                                {
                                    _3_second_expired++;
                                })
@@ -384,7 +384,7 @@ SCENARIO("Clock changes")
         clock.set(sys_days{2018_y / 05 / 05});
 
         // Every hour
-        REQUIRE(c.add_schedule("Clock change task", "0 0 * * * ?", []()
+        REQUIRE(c.add_schedule("Clock change task", "0 0 * * * ?", [](auto)
         {
         })
         );
@@ -462,7 +462,7 @@ SCENARIO("Multiple ticks per second")
     int run_count = 0;
 
     // Every 10 seconds
-    REQUIRE(c.add_schedule("Clock change task", "*/10 0 * * * ?", [&run_count]()
+    REQUIRE(c.add_schedule("Clock change task", "*/10 0 * * * ?", [&run_count](auto)
     {
         run_count++;
     })
@@ -499,35 +499,35 @@ SCENARIO("Tasks can be added and removed from the scheduler")
         WHEN("Adding 5 tasks that runs every second")
         {
             REQUIRE(c.add_schedule("Task-1", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-2", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-3", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-4", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-5", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto)
                                    {
                                        expired = true;
                                    })
