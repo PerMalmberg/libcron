@@ -11,14 +11,14 @@ namespace libcron
     class TaskInformation
     {
         public:
-            virtual ~TaskInformation() {}
+            virtual ~TaskInformation() = default;
             virtual std::chrono::system_clock::duration get_delay() const = 0;
     };
 
     class Task : public TaskInformation
     {
         public:
-            using TaskFunction = std::function<void(const TaskInformation*)>;
+            using TaskFunction = std::function<void(const TaskInformation&)>;
 
             Task(std::string name, const CronSchedule schedule, TaskFunction task)
                     : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
@@ -31,7 +31,7 @@ namespace libcron
                 delay = now - next_schedule;
 
                 last_run = now;
-                task(this);
+                task(*this);
             }
 
             std::chrono::system_clock::duration get_delay() const override
