@@ -44,7 +44,7 @@ namespace libcron
                 if (res)
                 {
                     tasks.lock_queue();
-                    Task t{std::move(name), CronSchedule{cron}, Task::TaskProxy(work) };
+                    Task t{std::move(name), CronSchedule{cron}, work };
                     if (t.calculate_next(clock.now()))
                     {
                         tasks.push(t);

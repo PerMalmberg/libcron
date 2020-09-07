@@ -19,22 +19,8 @@ namespace libcron
     {
         public:
             using TaskFunction = std::function<void(const TaskInformation*)>;
-
-            class TaskProxy
-            {
-                public:
-                TaskProxy(TaskFunction task) : task(std::move(task)) {}
-
-                void operator() (const TaskInformation* i)
-                {
-                    task(i);
-                }
-
-                private:
-                TaskFunction task;
-            };
-
-            Task(std::string name, const CronSchedule schedule, TaskProxy task)
+            
+            Task(std::string name, const CronSchedule schedule, TaskFunction task)
                     : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
             {
             }
@@ -81,7 +67,7 @@ namespace libcron
             CronSchedule schedule;
             std::chrono::system_clock::time_point next_schedule;
             std::chrono::system_clock::duration delay = std::chrono::seconds(-1);
-            TaskProxy task;
+            TaskFunction task;
             bool valid = false;
             std::chrono::system_clock::time_point last_run = std::numeric_limits<std::chrono::system_clock::time_point>::min();
     };
