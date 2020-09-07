@@ -20,14 +20,14 @@ std::string create_schedule_expiring_in(std::chrono::system_clock::time_point no
     return res;
 }
 
-void callback_without_context(const libcron::TaskInterface&)
+void callback_without_context(const libcron::TaskInformation*)
 {
 
 }
 
-void callback_with_context(const libcron::TaskInterface& i)
+void callback_with_context(const libcron::TaskInformation* i)
 {
-    auto delay = i.get_delay();
+    auto delay = i->get_delay();
 }
 
 SCENARIO("Different callback implementation")
@@ -50,7 +50,7 @@ SCENARIO("Different callback implementation")
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
                                [&expired_lambda_with_capture_and_context](auto i)
                                {
-                                   auto delay = i.get_delay();
+                                   auto delay = i->get_delay();
                                    expired_lambda_with_capture_and_context = true;
                                })
         );
@@ -66,7 +66,7 @@ SCENARIO("Different callback implementation")
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
                                [](auto i)
                                {
-                                   auto delay = i.get_delay();
+                                   auto delay = i->get_delay();
                                })
         );
 

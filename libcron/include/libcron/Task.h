@@ -8,28 +8,24 @@
 
 namespace libcron
 {
-    class TaskInterface
+    class TaskInformation
     {
         public:
-            virtual ~TaskInterface() {}
-            virtual std::chrono::system_clock::duration get_delay() const 
-            { 
-                using namespace std::chrono_literals;
-                return std::chrono::system_clock::duration(-1s);
-            };
+            virtual ~TaskInformation() {}
+            virtual std::chrono::system_clock::duration get_delay() const = 0;
     };
 
-    class Task : public TaskInterface
+    class Task : public TaskInformation
     {
         public:
-            using TaskFunction = std::function<void(const TaskInterface&)>;
+            using TaskFunction = std::function<void(const TaskInformation*)>;
 
             class TaskProxy
             {
                 public:
                 TaskProxy(TaskFunction task) : task(std::move(task)) {}
 
-                void operator() (const TaskInterface& i)
+                void operator() (const TaskInformation* i)
                 {
                     task(i);
                 }
@@ -49,7 +45,7 @@ namespace libcron
                 delay = now - next_schedule;
 
                 last_run = now;
-                task(*this);
+                task(this);
             }
 
             std::chrono::system_clock::duration get_delay() const
