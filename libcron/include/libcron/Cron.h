@@ -58,9 +58,6 @@ namespace libcron
             void clear_schedules();
             void remove_schedule(const std::string& name);
 
-            // Returns the delay between planned and actual execution-timepoint. 
-            std::chrono::system_clock::duration get_delay(const std::string& name);
-
             size_t count() const
             {
                 return tasks.size();
@@ -157,24 +154,6 @@ namespace libcron
             bool first_tick = true;
             std::chrono::system_clock::time_point last_tick{};
     };
-    
-    template<typename ClockType, typename LockType>
-    std::chrono::system_clock::duration Cron<ClockType, LockType>::get_delay(const std::string& name)
-    {
-        std::chrono::system_clock::duration delay = std::chrono::seconds(-1);
-        tasks.lock_queue();
-
-        std::vector<Task>& tvec = tasks.get_tasks();
-        auto it = std::find_if(tvec.begin(), tvec.end(), [&name](const Task& T){return T.get_name() == name; });
-        
-        if (it != tvec.end())
-        {
-            delay = it->get_delay();
-        }
-
-        tasks.release_queue();
-        return delay;
-    }
 
     template<typename ClockType, typename LockType>
     void Cron<ClockType, LockType>::clear_schedules()

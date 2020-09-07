@@ -20,73 +20,6 @@ std::string create_schedule_expiring_in(std::chrono::system_clock::time_point no
     return res;
 }
 
-void callback_without_context(const libcron::TaskInformation*)
-{
-
-}
-
-void callback_with_context(const libcron::TaskInformation* i)
-{
-    auto delay = i->get_delay();
-}
-
-SCENARIO("Different callback implementation")
-{
-    GIVEN("A Cron instance with different tasks expiring after one second")
-    {
-        Cron<> c;
-        auto expired_lambda_with_capture = false;
-        auto expired_lambda_with_capture_and_context = false;
-
-        REQUIRE(c.add_schedule("A lambda with capture and no context",
-                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               [&expired_lambda_with_capture](auto)
-                               {
-                                   expired_lambda_with_capture = true;
-                               })
-        );
-
-        REQUIRE(c.add_schedule("A lambda with capture and context",
-                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               [&expired_lambda_with_capture_and_context](auto i)
-                               {
-                                   auto delay = i->get_delay();
-                                   expired_lambda_with_capture_and_context = true;
-                               })
-        );
-
-        REQUIRE(c.add_schedule("A lambda without capture and no context",
-                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               [](auto)
-                               {
-                               })
-        );
-
-        REQUIRE(c.add_schedule("A lambda without capture and context",
-                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               [](auto i)
-                               {
-                                   auto delay = i->get_delay();
-                               })
-        );
-
-        REQUIRE(c.add_schedule("A function-style pointer and no context",
-                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               callback_without_context)
-        );
-
-        REQUIRE(c.add_schedule("A function-style pointer and context",
-                               create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{1}),
-                               callback_with_context)
-        );
-
-        std::this_thread::sleep_for(1s);
-        REQUIRE(c.tick() == 6);
-        REQUIRE(expired_lambda_with_capture);
-        REQUIRE(expired_lambda_with_capture_and_context);
-    }
-}
-
 SCENARIO("Adding a task")
 {
     GIVEN("A Cron instance with no task")
@@ -166,27 +99,29 @@ SCENARIO("Adding a task that expires in the future")
     }
 }
 
-SCENARIO("Task on-time check")
+SCENARIO("Get delay using Task-Information")
 {
     using namespace std::chrono_literals;
 
     GIVEN("A Cron instance with one task expiring in  2 seconds, but taking 3 seconds to execute")
     {
         auto _2_second_expired = 0;
+        auto _delay = std::chrono::system_clock::duration(-1s);
 
         Cron<> c;
         REQUIRE(c.add_schedule("Two",
                                "*/2 * * * * ?",
-                               [&_2_second_expired](auto)
+                               [&_2_second_expired, &_delay](auto i)
                                {
                                    _2_second_expired++;
+                                   _delay = i->get_delay();
                                    std::this_thread::sleep_for(3s);
                                })
         );
         THEN("Not yet expired")
         {
             REQUIRE_FALSE(_2_second_expired);
-            REQUIRE(c.get_delay("Two") <= 0s);
+            REQUIRE(_delay <= 0s);
         }
         WHEN("Exactly schedule task")
         {
@@ -196,57 +131,13 @@ SCENARIO("Task on-time check")
             THEN("Task should have expired within a valid time")
             {
                 REQUIRE(_2_second_expired == 1);
-                REQUIRE(c.get_delay("Two") <= 1s);
+                REQUIRE(_delay <= 1s);
             }
-            AND_THEN("Executing another tick again, leading to execute task again immediatly, but not on time.")
+            AND_THEN("Executing another tick again, leading to execute task again immediatly, but not on time as execution has taken 3 seconds.")
             {
                 c.tick();
                 REQUIRE(_2_second_expired == 2);
-                REQUIRE(c.get_delay("Two") >= 1s);
-            }
-            AND_THEN("Delay is negative for unknown tasks.")
-            {
-                REQUIRE(c.get_delay("One") <= 0s);
-            }
-        }
-    }
-    GIVEN("A Cron Task scheduled every second taking almost zero time to execute, testing locking behaviour")
-    {
-        auto _0_second_expired = 0;
-        Cron<libcron::LocalClock, libcron::Locker> c;
-        REQUIRE(c.add_schedule("Zero",
-                               "*/1 * * * * ?",
-                               [&_0_second_expired, &c](auto)
-                               {
-                                   // Trying to call get_delay in callback (multiple mutex access)
-                                   c.get_delay("Zero");
-                                   _0_second_expired++;
-                               })
-        );
-        THEN("Not yet expired")
-        {
-            REQUIRE_FALSE(_0_second_expired);
-            REQUIRE(c.get_delay("Zero") <= 0s);
-        }
-        WHEN("Exactly schedule task")
-        {
-            while (_0_second_expired == 0)
-                c.tick();
-
-            THEN("Task should have expired within a valid time")
-            {
-                REQUIRE(_0_second_expired == 1);
-                REQUIRE(c.get_delay("Zero") <= 1s);
-            }
-        }
-        WHEN("Dismissing tick due to slow calling thread.")
-        {
-            THEN("Task is called, but not within a valid time.")
-            {
-                std::this_thread::sleep_for(2s);
-                c.tick();
-                REQUIRE(_0_second_expired == 1);
-                REQUIRE(c.get_delay("Zero") > 1s);
+                REQUIRE(_delay >= 1s);
             }
         }
     }

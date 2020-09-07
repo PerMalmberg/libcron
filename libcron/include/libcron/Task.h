@@ -19,7 +19,7 @@ namespace libcron
     {
         public:
             using TaskFunction = std::function<void(const TaskInformation*)>;
-            
+
             Task(std::string name, const CronSchedule schedule, TaskFunction task)
                     : name(std::move(name)), schedule(std::move(schedule)), task(std::move(task))
             {
@@ -27,14 +27,14 @@ namespace libcron
 
             void execute(std::chrono::system_clock::time_point now)
             {
-                // Next Schedule is still the current schedule, check if execution was on time (within 1 second) 
+                // Next Schedule is still the current schedule, calculate delay (actual execution - planned execution)
                 delay = now - next_schedule;
 
                 last_run = now;
                 task(this);
             }
 
-            std::chrono::system_clock::duration get_delay() const
+            std::chrono::system_clock::duration get_delay() const override
             {
                 return delay;
             }
