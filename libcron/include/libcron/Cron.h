@@ -36,25 +36,7 @@ namespace libcron
     class Cron
     {
         public:
-            template<typename WorkType>
-            bool add_schedule(std::string name, const std::string& schedule, WorkType work)
-            {
-                auto cron = CronData::create(schedule);
-                bool res = cron.is_valid();
-                if (res)
-                {
-                    tasks.lock_queue();
-                    Task t{std::move(name), CronSchedule{cron}, work };
-                    if (t.calculate_next(clock.now()))
-                    {
-                        tasks.push(t);
-                    }
-                    tasks.release_queue();
-                }
-
-                return res;
-            }
-
+            bool add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work);
             void clear_schedules();
             void remove_schedule(const std::string& name);
 
@@ -154,6 +136,25 @@ namespace libcron
             bool first_tick = true;
             std::chrono::system_clock::time_point last_tick{};
     };
+    
+    template<typename ClockType, typename LockType>
+    bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work)
+    {
+        auto cron = CronData::create(schedule);
+        bool res = cron.is_valid();
+        if (res)
+        {
+            tasks.lock_queue();
+            Task t{std::move(name), CronSchedule{cron}, work };
+            if (t.calculate_next(clock.now()))
+            {
+                tasks.push(t);
+            }
+            tasks.release_queue();
+        }
+
+        return res;
+    }
 
     template<typename ClockType, typename LockType>
     void Cron<ClockType, LockType>::clear_schedules()
