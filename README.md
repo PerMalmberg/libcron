@@ -8,7 +8,7 @@ Libcron offers an easy to use API to add callbacks with corresponding cron-forma
 ```
 libcron::Cron cron;
 
-cron.add_schedule("Hello from Cron", "* * * * * ?", [=]() {
+cron.add_schedule("Hello from Cron", "* * * * * ?", [=](auto&) {
 	std::cout << "Hello from libcron!" std::endl;
 });
 ```
@@ -21,6 +21,28 @@ while(true)
 	cron.tick();
 	std::this_thread::sleep_for(500mS);
 }
+```
+
+The callback must have the following signature:
+
+```
+std::function<void(const libcron::TaskInformation&)>
+```
+
+`libcron::Taskinformation` offers a convenient API to retrieve further information:
+
+- `libcron::TaskInformation::get_delay` informs about the delay between planned and actual execution of the callback. Hence, it is possible to ensure that a task was executed within a specific tolerance:
+
+```
+libcron::Cron cron;
+
+cron.add_schedule("Hello from Cron", "* * * * * ?", [=](auto& i) {
+	using namespace std::chrono_literals;
+	if (i.get_delay() >= 1s)
+	{
+		std::cout << "The Task was executed too late..." << std::endl;
+	}
+});
 ```
 
 
