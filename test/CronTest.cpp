@@ -35,7 +35,7 @@ SCENARIO("Adding a task")
         WHEN("Adding a task that runs every second")
         {
             REQUIRE(c.add_schedule("A task", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto&)
                                    {
                                        expired = true;
                                    })
@@ -68,7 +68,7 @@ SCENARIO("Adding a task that expires in the future")
         Cron<> c;
         REQUIRE(c.add_schedule("A task",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{3}),
-                               [&expired]()
+                               [&expired](auto&)
                                {
                                    expired = true;
                                })
@@ -99,6 +99,50 @@ SCENARIO("Adding a task that expires in the future")
     }
 }
 
+SCENARIO("Get delay using Task-Information")
+{
+    using namespace std::chrono_literals;
+
+    GIVEN("A Cron instance with one task expiring in  2 seconds, but taking 3 seconds to execute")
+    {
+        auto _2_second_expired = 0;
+        auto _delay = std::chrono::system_clock::duration(-1s);
+
+        Cron<> c;
+        REQUIRE(c.add_schedule("Two",
+                               "*/2 * * * * ?",
+                               [&_2_second_expired, &_delay](auto& i)
+                               {
+                                   _2_second_expired++;
+                                   _delay = i.get_delay();
+                                   std::this_thread::sleep_for(3s);
+                               })
+        );
+        THEN("Not yet expired")
+        {
+            REQUIRE_FALSE(_2_second_expired);
+            REQUIRE(_delay <= 0s);
+        }
+        WHEN("Exactly schedule task")
+        {
+            while (_2_second_expired == 0)
+                c.tick();
+
+            THEN("Task should have expired within a valid time")
+            {
+                REQUIRE(_2_second_expired == 1);
+                REQUIRE(_delay <= 1s);
+            }
+            AND_THEN("Executing another tick again, leading to execute task again immediatly, but not on time as execution has taken 3 seconds.")
+            {
+                c.tick();
+                REQUIRE(_2_second_expired == 2);
+                REQUIRE(_delay >= 1s);
+            }
+        }
+    }
+}
+
 SCENARIO("Task priority")
 {
     GIVEN("A Cron instance with two tasks expiring in 3 and 5 seconds, added in 'reverse' order")
@@ -110,7 +154,7 @@ SCENARIO("Task priority")
         Cron<> c;
         REQUIRE(c.add_schedule("Five",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{5}),
-                               [&_5_second_expired]()
+                               [&_5_second_expired](auto&)
                                {
                                    _5_second_expired++;
                                })
@@ -118,7 +162,7 @@ SCENARIO("Task priority")
 
         REQUIRE(c.add_schedule("Three",
                                create_schedule_expiring_in(c.get_clock().now(), hours{0}, minutes{0}, seconds{3}),
-                               [&_3_second_expired]()
+                               [&_3_second_expired](auto&)
                                {
                                    _3_second_expired++;
                                })
@@ -231,7 +275,7 @@ SCENARIO("Clock changes")
         clock.set(sys_days{2018_y / 05 / 05});
 
         // Every hour
-        REQUIRE(c.add_schedule("Clock change task", "0 0 * * * ?", []()
+        REQUIRE(c.add_schedule("Clock change task", "0 0 * * * ?", [](auto&)
         {
         })
         );
@@ -309,7 +353,7 @@ SCENARIO("Multiple ticks per second")
     int run_count = 0;
 
     // Every 10 seconds
-    REQUIRE(c.add_schedule("Clock change task", "*/10 0 * * * ?", [&run_count]()
+    REQUIRE(c.add_schedule("Clock change task", "*/10 0 * * * ?", [&run_count](auto&)
     {
         run_count++;
     })
@@ -346,35 +390,35 @@ SCENARIO("Tasks can be added and removed from the scheduler")
         WHEN("Adding 5 tasks that runs every second")
         {
             REQUIRE(c.add_schedule("Task-1", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto&)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-2", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto&)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-3", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto&)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-4", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto&)
                                    {
                                        expired = true;
                                    })
             );
 
             REQUIRE(c.add_schedule("Task-5", "* * * * * ?",
-                                   [&expired]()
+                                   [&expired](auto&)
                                    {
                                        expired = true;
                                    })

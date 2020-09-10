@@ -20,12 +20,10 @@ namespace libcron
     class Locker
     {
         public:
-            Locker() : lck(m, std::defer_lock) {}
-            void lock() { lck.lock(); }
-            void unlock() { lck.unlock(); }
+            void lock() { m.lock(); }
+            void unlock() { m.unlock(); }
         private:
-            std::mutex m{};
-            std::unique_lock<std::mutex> lck;
+            std::recursive_mutex m{};
     };
 
     template<typename ClockType, typename LockType>
@@ -38,8 +36,7 @@ namespace libcron
     class Cron
     {
         public:
-
-            bool add_schedule(std::string name, const std::string& schedule, std::function<void()> work);
+            bool add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work);
             void clear_schedules();
             void remove_schedule(const std::string& name);
 
@@ -139,16 +136,16 @@ namespace libcron
             bool first_tick = true;
             std::chrono::system_clock::time_point last_tick{};
     };
-
+    
     template<typename ClockType, typename LockType>
-    bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, std::function<void()> work)
+    bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work)
     {
         auto cron = CronData::create(schedule);
         bool res = cron.is_valid();
         if (res)
         {
             tasks.lock_queue();
-            Task t{std::move(name), CronSchedule{cron}, std::move(work)};
+            Task t{std::move(name), CronSchedule{cron}, work };
             if (t.calculate_next(clock.now()))
             {
                 tasks.push(t);

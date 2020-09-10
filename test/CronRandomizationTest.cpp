@@ -23,13 +23,13 @@ void test(const char* const random_schedule, bool expect_failure = false)
         if(expect_failure)
         {
             // Parsing of random might succeed, but it yields an invalid schedule.
-            auto r = std::get<0>(res) && cron.add_schedule("validate schedule", schedule, []() {});
+            auto r = std::get<0>(res) && cron.add_schedule("validate schedule", schedule, [](auto&) {});
             REQUIRE_FALSE(r);
         }
         else
         {
             REQUIRE(std::get<0>(res));
-            REQUIRE(cron.add_schedule("validate schedule", schedule, []() {}));
+            REQUIRE(cron.add_schedule("validate schedule", schedule, [](auto&) {}));
 
         }
     }
