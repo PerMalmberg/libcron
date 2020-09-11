@@ -71,7 +71,7 @@ namespace libcron
         private:
             class Queue
                     // Priority queue placing smallest (i.e. nearest in time) items on top.
-                    : public std::priority_queue<Task, std::vector<Task>, std::greater<>>
+                    //: public std::priority_queue<Task, std::vector<Task>, std::greater<>>
             {
                 public:
                     // Inherit to allow access to the container.
@@ -85,30 +85,74 @@ namespace libcron
                         return c;
                     }
 
+                    size_t size() const noexcept
+                    {
+                        return c.size();
+                    }
+
+                    bool empty() const noexcept
+                    {
+                        return c.empty();
+                    }
+
+                    void push(Task& t)
+                    {
+                        c.push_back(std::move(t));
+                    }
+
+                    void push(Task&& t)
+                    {
+                        c.push_back(std::move(t));
+                    }
+
+                    const Task& top() const
+                    {
+                        return c[0];
+                    }
+
+                    Task& at(int i)
+                    {
+                        return c[i];
+                    }
+
+                    void sort()
+                    {
+                        std::sort(c.begin(), c.end(), std::less<>());
+                    }
+
                     void clear()
                     {
                         lock.lock();
 
-                        while (!empty())
-                            pop();
+                        std::vector<Task> empty;
+                        c.swap(empty);
 
                         lock.unlock();
                     }
 
-                    template<typename T>
-                    void remove(T to_remove)
+                    void remove(Task& t)
+                    {
+                        auto it = std::find_if(c.begin(), c.end(), [&t] (const Task& s) { 
+                                            return t.get_name() == s;
+                                            });
+                        
+                        if (it != c.end())
+                        {
+                            c.erase(it);
+                        }
+                    }
+
+                    void remove(std::string to_remove)
                     {
                         lock.lock();
 
-                        /* Copy current elements */
-                        std::vector<Task> temp{};
-                        std::swap(temp, c);
+                        auto it = std::find_if(c.begin(), c.end(), [&to_remove] (const Task& s) { 
+                                            return to_remove == s;
+                                            });
 
-                        /* Refill with elements ensuring correct order by calling push */
-                        for (const auto& task : temp)
+                        if (it != c.end())
                         {
-                            if (task != to_remove)
-                                push(task);
+                            c.erase(it);
                         }
 
                         lock.unlock();
@@ -128,6 +172,7 @@ namespace libcron
                     
                 private:
                     LockType lock;
+                    std::vector<Task> c;
             };
 
 
@@ -149,6 +194,7 @@ namespace libcron
             if (t.calculate_next(clock.now()))
             {
                 tasks.push(t);
+                tasks.sort();
             }
             tasks.release_queue();
         }
@@ -241,6 +287,32 @@ namespace libcron
 
         last_tick = now;
 
+        if (!tasks.empty())
+        {
+            for (size_t i = 0; i < tasks.size(); i++)
+            {
+                if (tasks.at(i).is_expired(now))
+                {
+                    auto& t = tasks.at(i);
+                    t.execute(now);
+
+                    using namespace std::chrono_literals;
+                    if (!t.calculate_next(now + 1s))
+                    {
+                        tasks.remove(t);
+                    }
+
+                    res++;
+                }
+            }
+
+            if (res > 0)
+            {
+                tasks.sort();
+            }
+        }
+
+        /*
         std::vector<Task> executed{};
 
         while (!tasks.empty()
@@ -265,6 +337,8 @@ namespace libcron
                 tasks.push(task);
             }
         });
+
+        */
 
         tasks.release_queue();
         return res;

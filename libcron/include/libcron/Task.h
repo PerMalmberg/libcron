@@ -50,6 +50,11 @@ namespace libcron
                 return next_schedule > other.next_schedule;
             }
 
+            bool operator<(const Task& other) const
+            {
+                return next_schedule < other.next_schedule;
+            }
+
             bool is_expired(std::chrono::system_clock::time_point now) const;
 
             std::chrono::system_clock::duration

@@ -1,5 +1,6 @@
 #include <catch.hpp>
 #include <libcron/include/libcron/Cron.h>
+#include <libcron/externals/date/include/date/date.h>
 #include <thread>
 #include <iostream>
 
@@ -209,6 +210,7 @@ SCENARIO("Task priority")
         }
         AND_WHEN("Waiting based on the time given by the Cron instance")
         {
+            auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(c.time_until_next());
             std::this_thread::sleep_for(c.time_until_next());
             c.tick();
 
@@ -442,6 +444,88 @@ SCENARIO("Tasks can be added and removed from the scheduler")
             {
                 c.remove_schedule("Task-5");
                 REQUIRE(c.count() == 4);
+            }
+        }
+    }
+}
+
+SCENARIO("Testing CRON-Tick Performance")
+{
+    GIVEN("A Cron instance with no task")
+    {
+        using clock = std::chrono::high_resolution_clock;
+        using std::chrono::milliseconds;
+        using std::chrono::duration_cast;
+
+        Cron<TestClock> c1{};
+        auto& cron_clock1 = c1.get_clock();
+        
+        Cron<TestClock> c2{};
+        auto& cron_clock2 = c2.get_clock();
+        
+        int count1 = 0;
+        int count2 = 0;
+
+        WHEN("Adding 1000 Tasks expiring calling add_schedule")
+        {
+            auto begin_add = clock::now();
+            for(int i = 1; i <= 1000; i++)
+            {
+                REQUIRE(c1.add_schedule("Task-" + std::to_string(i), "* * * * * ?",
+                                    [&count1](auto&)
+                                    {
+                                        count1++;
+                                    })
+                );
+                REQUIRE(c2.add_schedule("Task-" + std::to_string(i), "* * * * * ?",
+                                    [&count2](auto&)
+                                    {
+                                        count2++;
+                                    })
+                );                
+            }
+
+            auto end_add = clock::now();
+            REQUIRE(duration_cast<milliseconds>(end_add - begin_add).count()<= 2000);
+            REQUIRE(c1.count() == 1000);
+            REQUIRE(c2.count() == 1000);
+
+            THEN("Call Tick")
+            {
+                int msec_1 = 0;
+                auto t1 = std::thread([&cron_clock1, &c1, &msec_1]() {
+                    auto begin_tick = clock::now();
+                    for(auto i = 0; i < 10; ++i)
+                    {
+                        cron_clock1.add(std::chrono::seconds{1});
+                        c1.tick();
+                    }   
+
+                    auto end_tick = clock::now();
+                    msec_1 = duration_cast<milliseconds>(end_tick - begin_tick).count()/10;
+                });
+
+                int msec_2 = 0;
+                auto t2 = std::thread([&cron_clock2, &c2, &msec_2]() {
+                    auto begin_tick = clock::now();
+                    for(auto i = 0; i < 10; ++i)
+                    {
+                        cron_clock2.add(std::chrono::seconds{1});
+                        c2.tick();
+                    }   
+
+                    auto end_tick = clock::now();
+                    msec_2 = duration_cast<milliseconds>(end_tick - begin_tick).count()/10;
+                });
+
+                t1.join();
+                t2.join();
+
+                REQUIRE(count1 == 10000);
+                REQUIRE(count1 == 10000);
+                
+                REQUIRE(msec_1 <= 100);
+                REQUIRE(msec_2 <= 100);
             }
         }
     }
