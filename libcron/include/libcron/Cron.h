@@ -68,6 +68,14 @@ namespace libcron
                 return clock;
             }
 
+            void recalculate_schedule()
+            {
+                for (auto& t : tasks.get_tasks())
+                {
+                    t.calculate_next(now);
+                }
+            }
+
             void get_time_until_expiry_for_tasks(
                     std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status) const;
 
