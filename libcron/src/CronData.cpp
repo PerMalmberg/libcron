@@ -15,11 +15,21 @@ namespace libcron
 
     const std::vector<std::string> CronData::month_names{ "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" };
     const std::vector<std::string> CronData::day_names{ "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT" };
+    std::unordered_map<std::string, CronData> CronData::cache;
 
     CronData CronData::create(const std::string& cron_expression)
     {
         CronData c;
-        c.parse(cron_expression);
+
+        try 
+        {
+            c = cache.at(cron_expression);
+        }
+        catch (const std::out_of_range&)
+        {
+            c.parse(cron_expression);
+            cache[cron_expression] = c;
+        }
 
         return c;
     }

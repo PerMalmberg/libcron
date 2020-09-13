@@ -462,13 +462,31 @@ SCENARIO("Testing CRON-Tick Performance")
         
         Cron<TestClock> c2{};
         auto& cron_clock2 = c2.get_clock();
+
+        Cron<TestClock> c3{};
+        auto& cron_clock3 = c3.get_clock();
         
         int count1 = 0;
         int count2 = 0;
+        int count3 = 0;
 
-        WHEN("Adding 1000 Tasks expiring calling add_schedule")
+        WHEN("Creating 1000 CronData Objects")
         {
-            auto begin_add = clock::now();
+            std::string cron_job = "* * * * * ?";
+            auto begin_cron_data = clock::now();
+            for(int i = 1; i <= 1000; i++)
+            {
+                auto cron = CronData::create(cron_job);
+            }
+            auto end_cron_data = clock::now();
+            auto msec_cron_data = duration_cast<milliseconds>(end_cron_data - begin_cron_data).count();
+            
+            // Hopefully executing a more or less empty task does only take some milliseconds
+            REQUIRE(msec_cron_data <= 1000);
+        }
+        WHEN("Adding 1000 Tasks to two Cron-Objects expiring after 1 second calling add_schedule")
+        {
+            auto begin_add_sequential = clock::now();
             for(int i = 1; i <= 1000; i++)
             {
                 REQUIRE(c1.add_schedule("Task-" + std::to_string(i), "* * * * * ?",
@@ -484,16 +502,41 @@ SCENARIO("Testing CRON-Tick Performance")
                                     })
                 );                
             }
+            auto end_add_sequential = clock::now();
 
-            auto end_add = clock::now();
-            REQUIRE(duration_cast<milliseconds>(end_add - begin_add).count()<= 2000);
+            std::map<std::string, std::string> name_schedule_map;
+            //name_schedule_map.reserve(1000);
+            for(int i = 1; i <= 1000; i++)
+            {
+                name_schedule_map["Task-" + std::to_string(i)] = "* * * * * ?";
+                //name_schedule_map.push_back(std::make_pair("Task-" + std::to_string(i), "* * * * * ?"));
+            }
+
+            auto begin_add_batch = clock::now();
+            REQUIRE(c3.add_schedule(name_schedule_map,
+                                [&count3](auto&)
+                                {
+                                    count3++;
+                                })
+            );
+            auto end_add_batch = clock::now();
+
+            
+            auto time_sequential = duration_cast<milliseconds>(end_add_sequential - begin_add_sequential).count() / 2;
+            auto time_batch = duration_cast<milliseconds>(end_add_batch - begin_add_batch).count();
+            
+            // This should hopefully take only a few second?
+            REQUIRE(time_sequential < 10000);
+            REQUIRE(time_batch < 5000);
+            REQUIRE(time_batch < time_sequential);
             REQUIRE(c1.count() == 1000);
             REQUIRE(c2.count() == 1000);
+            REQUIRE(c3.count() == 1000);
 
-            THEN("Call Tick")
+            THEN("Execute all Tasks 10 Times")
             {
-                int msec_1 = 0;
-                auto t1 = std::thread([&cron_clock1, &c1, &msec_1]() {
+                long long msec1 = 0;
+                auto t1 = std::thread([&cron_clock1, &c1, &msec1]() {
                     auto begin_tick = clock::now();
                     for(auto i = 0; i < 10; ++i)
                     {
@@ -502,11 +545,11 @@ SCENARIO("Testing CRON-Tick Performance")
                     }   
 
                     auto end_tick = clock::now();
-                    msec_1 = duration_cast<milliseconds>(end_tick - begin_tick).count()/10;
+                    msec1 = duration_cast<milliseconds>(end_tick - begin_tick).count()/10;
                 });
 
-                int msec_2 = 0;
-                auto t2 = std::thread([&cron_clock2, &c2, &msec_2]() {
+                long long msec2 = 0;
+                auto t2 = std::thread([&cron_clock2, &c2, &msec2]() {
                     auto begin_tick = clock::now();
                     for(auto i = 0; i < 10; ++i)
                     {
@@ -515,17 +558,34 @@ SCENARIO("Testing CRON-Tick Performance")
                     }   
 
                     auto end_tick = clock::now();
-                    msec_2 = duration_cast<milliseconds>(end_tick - begin_tick).count()/10;
+                    msec2 = duration_cast<milliseconds>(end_tick - begin_tick).count()/10;
+                });
+
+                long long msec3 = 0;
+                auto t3 = std::thread([&cron_clock3, &c3, &msec3]() {
+                    auto begin_tick = clock::now();
+                    for(auto i = 0; i < 10; ++i)
+                    {
+                        cron_clock3.add(std::chrono::seconds{1});
+                        c3.tick();
+                    }   
+
+                    auto end_tick = clock::now();
+                    msec3 = duration_cast<milliseconds>(end_tick - begin_tick).count()/10;
                 });
 
                 t1.join();
                 t2.join();
+                t3.join();
 
                 REQUIRE(count1 == 10000);
-                REQUIRE(count1 == 10000);
-                
-                REQUIRE(msec_1 <= 100);
-                REQUIRE(msec_2 <= 100);
+                REQUIRE(count2 == 10000);
+                REQUIRE(count3 == 10000);
+
+                // Hopefully executing a more or less empty task does only take some milliseconds
+                REQUIRE(msec1 <= 10);
+                REQUIRE(msec2 <= 10);
+                REQUIRE(msec3 <= 10);
             }
         }
     }
