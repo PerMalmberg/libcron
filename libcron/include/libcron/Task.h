@@ -13,6 +13,7 @@ namespace libcron
         public:
             virtual ~TaskInformation() = default;
             virtual std::chrono::system_clock::duration get_delay() const = 0;
+            virtual std::string get_name() const = 0;
     };
 
     class Task : public TaskInformation
@@ -60,7 +61,7 @@ namespace libcron
             std::chrono::system_clock::duration
             time_until_expiry(std::chrono::system_clock::time_point now) const;
 
-            std::string get_name() const
+            std::string get_name() const override
             {
                 return name;
             }
