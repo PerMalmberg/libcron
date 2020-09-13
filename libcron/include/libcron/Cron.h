@@ -72,7 +72,7 @@ namespace libcron
             {
                 for (auto& t : tasks.get_tasks())
                 {
-                    t.calculate_next(now);
+                    t.calculate_next(clock.now());
                 }
             }
 
