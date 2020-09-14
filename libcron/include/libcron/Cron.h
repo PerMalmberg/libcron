@@ -72,7 +72,9 @@ namespace libcron
             {
                 for (auto& t : tasks.get_tasks())
                 {
-                    t.calculate_next(clock.now());
+                    using namespace std::chrono_literals;
+                    // Ensure that next schedule is in the future
+                    t.calculate_next(clock.now() + 1s);
                 }
             }
 
