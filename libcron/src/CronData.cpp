@@ -20,17 +20,18 @@ namespace libcron
     CronData CronData::create(const std::string& cron_expression)
     {
         CronData c;
+        auto found = cache.find(cron_expression);
 
-        try 
-        {
-            c = cache.at(cron_expression);
-        }
-        catch (const std::out_of_range&)
+        if (found == cache.end())
         {
             c.parse(cron_expression);
             cache[cron_expression] = c;
         }
-
+        else
+        {
+            c = found->second;
+        }
+        
         return c;
     }
 

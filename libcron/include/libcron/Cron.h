@@ -9,6 +9,7 @@
 #include <vector>
 #include "Task.h"
 #include "CronClock.h"
+#include "SortableQueue.h"
 
 namespace libcron
 {
@@ -28,20 +29,22 @@ namespace libcron
             std::recursive_mutex m{};
     };
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
+    template<typename ClockType, typename LockType>
     class Cron;
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, LockType, NameScheduleMapType>& c);
+    template<typename ClockType, typename LockType>
+    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, LockType>& c);
 
     template<typename ClockType = libcron::LocalClock, 
-             typename LockType = libcron::NullLock, 
-             typename NameScheduleMapType = std::map<std::string, std::string>>
+             typename LockType = libcron::NullLock>
     class Cron
     {
-        public:            
+        public:          
             bool add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work);
-            bool add_schedule(const NameScheduleMapType& name_schedule_map, Task::TaskFunction work);
+            
+            template<typename Schedules = std::map<std::string, std::string>>
+            std::tuple<bool, std::string, std::string>
+            add_schedule(const Schedules& name_schedule_map, Task::TaskFunction work);
             void clear_schedules();
             void remove_schedule(const std::string& name);
 
@@ -84,124 +87,14 @@ namespace libcron
             friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType, LockType>& c);
 
         private:
-            class SortableQueue
-            {
-                public:
-                    const std::vector<Task>& get_tasks() const
-                    {
-                        return c;
-                    }
-
-                    std::vector<Task>& get_tasks()
-                    {
-                        return c;
-                    }
-
-                    size_t size() const noexcept
-                    {
-                        return c.size();
-                    }
-
-                    bool empty() const noexcept
-                    {
-                        return c.empty();
-                    }
-
-                    void push(Task& t)
-                    {
-                        c.push_back(std::move(t));
-                    }
-
-                    void push(Task&& t)
-                    {
-                        c.push_back(std::move(t));
-                    }
-
-                    void push(std::vector<Task>&& tasks_to_insert)
-                    {
-                        c.reserve(c.size() + tasks_to_insert.size());
-                        c.insert(c.end(), tasks_to_insert.begin(), tasks_to_insert.end());
-                    }
-
-                    const Task& top() const
-                    {
-                        return c[0];
-                    }
-
-                    Task& at(const size_t i)
-                    {
-                        return c[i];
-                    }
-
-                    void sort()
-                    {
-                        std::sort(c.begin(), c.end(), std::less<>());
-                    }
-
-                    void clear()
-                    {
-                        lock.lock();
-
-                        std::vector<Task> empty;
-                        c.swap(empty);
-
-                        lock.unlock();
-                    }
-
-                    void remove(Task& to_remove)
-                    {
-                        auto it = std::find_if(c.begin(), c.end(), [&to_remove] (const Task& to_compare) { 
-                                            return to_remove.get_name() == to_compare;
-                                            });
-                        
-                        if (it != c.end())
-                        {
-                            c.erase(it);
-                        }
-                    }
-
-                    void remove(std::string to_remove)
-                    {
-                        lock.lock();
-
-                        auto it = std::find_if(c.begin(), c.end(), [&to_remove] (const Task& to_compare) { 
-                                            return to_remove == to_compare;
-                                            });
-
-                        if (it != c.end())
-                        {
-                            c.erase(it);
-                        }
-
-                        lock.unlock();
-                    }
-
-                    void lock_queue()
-                    {
-                        /* Do not allow to manipulate the Queue */
-                        lock.lock();
-                    }
-
-                    void release_queue()
-                    {
-                        /* Allow Access to the Queue Manipulating-Functions */
-                        lock.unlock();
-                    }
-                    
-                private:
-                    LockType lock;
-                    std::vector<Task> c;
-            };
-
-
-            SortableQueue tasks{};
+            SortableQueue<LockType> tasks{};
             ClockType clock{};
             bool first_tick = true;
             std::chrono::system_clock::time_point last_tick{};
     };
     
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    bool Cron<ClockType, LockType, NameScheduleMapType>::add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work)
+    template<typename ClockType, typename LockType>
+    bool Cron<ClockType, LockType>::add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work)
     {
         auto cron = CronData::create(schedule);
         bool res = cron.is_valid();
@@ -220,10 +113,15 @@ namespace libcron
         return res;
     }
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    bool Cron<ClockType, LockType, NameScheduleMapType>::add_schedule(const NameScheduleMapType& name_schedule_map, Task::TaskFunction work)
+    template<typename ClockType, typename LockType>
+    template<typename Schedules>
+    std::tuple<bool, std::string, std::string>
+    Cron<ClockType, LockType>::add_schedule(const Schedules& name_schedule_map, Task::TaskFunction work)
     {
         bool res = false;
+        std::string failed_at_schedule = "";
+        std::string failed_at_name = "";
+
         std::vector<Task> tasks_to_add;
         tasks_to_add.reserve(name_schedule_map.size());
 
@@ -241,6 +139,8 @@ namespace libcron
             }
             else 
             {
+                failed_at_name = name;
+                failed_at_schedule = schedule;
                 break;
             }
         }
@@ -253,23 +153,23 @@ namespace libcron
             tasks.sort();
             tasks.release_queue();
         }
-        return res;
+        return std::make_tuple(res, failed_at_name, failed_at_schedule);
     }
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    void Cron<ClockType, LockType, NameScheduleMapType>::clear_schedules()
+    template<typename ClockType, typename LockType>
+    void Cron<ClockType, LockType>::clear_schedules()
     {
         tasks.clear();
     }
     
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    void Cron<ClockType, LockType, NameScheduleMapType>::remove_schedule(const std::string& name)
+    template<typename ClockType, typename LockType>
+    void Cron<ClockType, LockType>::remove_schedule(const std::string& name)
     {
         tasks.remove(name);
     }
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    std::chrono::system_clock::duration Cron<ClockType, LockType, NameScheduleMapType>::time_until_next() const
+    template<typename ClockType, typename LockType>
+    std::chrono::system_clock::duration Cron<ClockType, LockType>::time_until_next() const
     {
         std::chrono::system_clock::duration d{};
         if (tasks.empty())
@@ -284,8 +184,8 @@ namespace libcron
         return d;
     }
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    size_t Cron<ClockType, LockType, NameScheduleMapType>::tick(std::chrono::system_clock::time_point now)
+    template<typename ClockType, typename LockType>
+    size_t Cron<ClockType, LockType>::tick(std::chrono::system_clock::time_point now)
     {
         tasks.lock_queue();
         size_t res = 0;
@@ -371,8 +271,8 @@ namespace libcron
         return res;
     }
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    void Cron<ClockType, LockType, NameScheduleMapType>::get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string,
+    template<typename ClockType, typename LockType>
+    void Cron<ClockType, LockType>::get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string,
                                                           std::chrono::system_clock::duration>>& status) const
     {
         auto now = clock.now();
@@ -385,8 +285,8 @@ namespace libcron
                       });
     }
 
-    template<typename ClockType, typename LockType, typename NameScheduleMapType>
-    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, LockType, NameScheduleMapType>& c)
+    template<typename ClockType, typename LockType>
+    std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, LockType>& c)
     {
         std::for_each(c.tasks.get_tasks().cbegin(), c.tasks.get_tasks().cend(),
                       [&stream, &c](const Task& t)
