@@ -125,9 +125,9 @@ namespace libcron
             std::set<DayOfWeek> day_of_week{};
             bool valid = false;
 
-            static const std::vector<std::string> month_names{};
-            static const std::vector<std::string> day_names{};
-            static std::unordered_map<std::string, CronData> cache{};
+            static const std::vector<std::string> month_names;
+            static const std::vector<std::string> day_names;
+            static std::unordered_map<std::string, CronData> cache;
 
             template<typename T>
             void add_full_range(std::set<T>& set);

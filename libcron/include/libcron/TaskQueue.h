@@ -9,7 +9,7 @@
 namespace libcron
 {           
     template<typename LockType>
-    class SortableQueue
+    class TaskQueue
     {
         public:
             const std::vector<Task>& get_tasks() const
@@ -42,10 +42,10 @@ namespace libcron
                 c.push_back(std::move(t));
             }
             
-            void push(std::vector<Task>&& tasks_to_insert)
+            void push(std::vector<Task>& tasks_to_insert)
             {
                 c.reserve(c.size() + tasks_to_insert.size());
-                c.insert(c.end(), tasks_to_insert.begin(), tasks_to_insert.end());
+                c.insert(c.end(), std::make_move_iterator(tasks_to_insert.begin()), std::make_move_iterator(tasks_to_insert.end()));
             }
             
             const Task& top() const

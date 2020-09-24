@@ -9,7 +9,7 @@
 #include <vector>
 #include "Task.h"
 #include "CronClock.h"
-#include "SortableQueue.h"
+#include "TaskQueue.h"
 
 namespace libcron
 {
@@ -87,7 +87,7 @@ namespace libcron
             friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType, LockType>& c);
 
         private:
-            SortableQueue<LockType> tasks{};
+            TaskQueue<LockType> tasks{};
             ClockType clock{};
             bool first_tick = true;
             std::chrono::system_clock::time_point last_tick{};
@@ -118,9 +118,8 @@ namespace libcron
     std::tuple<bool, std::string, std::string>
     Cron<ClockType, LockType>::add_schedule(const Schedules& name_schedule_map, Task::TaskFunction work)
     {
-        bool res = false;
-        std::string failed_at_schedule = "";
-        std::string failed_at_name = "";
+        bool is_valid = false;
+        std::tuple<bool, std::string, std::string> res{false, "", ""};
 
         std::vector<Task> tasks_to_add;
         tasks_to_add.reserve(name_schedule_map.size());
@@ -128,8 +127,8 @@ namespace libcron
         for (const auto& [name, schedule] : name_schedule_map)
         {
             auto cron = CronData::create(schedule);
-            res = cron.is_valid();
-            if (res)
+            is_valid = cron.is_valid();
+            if (is_valid)
             {
                 Task t{std::move(name), CronSchedule{cron}, work };
                 if (t.calculate_next(clock.now()))
@@ -139,21 +138,23 @@ namespace libcron
             }
             else 
             {
-                failed_at_name = name;
-                failed_at_schedule = schedule;
+                std::get<1>(res) = name;
+                std::get<2>(res) = schedule;
                 break;
             }
         }
 
         // Only add tasks and sort once if all elements in the map where valid
-        if (res)
+        if (is_valid)
         {
             tasks.lock_queue();
-            tasks.push(std::move(tasks_to_add));
+            tasks.push(tasks_to_add);
             tasks.sort();
             tasks.release_queue();
         }
-        return std::make_tuple(res, failed_at_name, failed_at_schedule);
+
+        std::get<0>(res) = is_valid;
+        return res;
     }
 
     template<typename ClockType, typename LockType>
