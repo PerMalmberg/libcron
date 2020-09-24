@@ -559,7 +559,7 @@ SCENARIO("Testing CRON-Tick Performance")
             }
             auto end_add_sequential = clock::now();
 
-            std::map<std::string, std::string> name_schedule_map;
+            std::map<std::string, std::string> name_schedule_map{};
             for(int i = 1; i <= 1000; i++)
             {
                 name_schedule_map["Task-" + std::to_string(i)] = "* * * * * ?";

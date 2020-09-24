@@ -39,7 +39,7 @@ namespace libcron
              typename LockType = libcron::NullLock>
     class Cron
     {
-        public:          
+        public:
             bool add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work);
             
             template<typename Schedules = std::map<std::string, std::string>>
@@ -260,7 +260,7 @@ namespace libcron
                 }
             }
 
-            // Only Sort once and only if at least one task was executed
+            // Only sort if at least one task was executed
             if (res > 0)
             {
                 tasks.sort();
