@@ -118,14 +118,15 @@ namespace libcron
     std::tuple<bool, std::string, std::string>
     Cron<ClockType, LockType>::add_schedule(const Schedules& name_schedule_map, Task::TaskFunction work)
     {
-        bool is_valid = false;
+        bool is_valid = true;
         std::tuple<bool, std::string, std::string> res{false, "", ""};
 
         std::vector<Task> tasks_to_add;
         tasks_to_add.reserve(name_schedule_map.size());
 
-        for (const auto& [name, schedule] : name_schedule_map)
+        for (auto it = name_schedule_map.begin(); is_valid && it != name_schedule_map.end(); ++it)
         {
+            const auto& [name, schedule] = *it;
             auto cron = CronData::create(schedule);
             is_valid = cron.is_valid();
             if (is_valid)
@@ -140,12 +141,11 @@ namespace libcron
             {
                 std::get<1>(res) = name;
                 std::get<2>(res) = schedule;
-                break;
             }
         }
 
         // Only add tasks and sort once if all elements in the map where valid
-        if (is_valid)
+        if (is_valid && tasks_to_add.size() > 0)
         {
             tasks.lock_queue();
             tasks.push(tasks_to_add);
