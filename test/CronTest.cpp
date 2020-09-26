@@ -1,5 +1,6 @@
 #include <catch.hpp>
 #include <libcron/include/libcron/Cron.h>
+#include <libcron/externals/date/include/date/date.h>
 #include <thread>
 #include <iostream>
 
@@ -209,6 +210,7 @@ SCENARIO("Task priority")
         }
         AND_WHEN("Waiting based on the time given by the Cron instance")
         {
+            auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(c.time_until_next());
             std::this_thread::sleep_for(c.time_until_next());
             c.tick();
 
@@ -442,6 +444,201 @@ SCENARIO("Tasks can be added and removed from the scheduler")
             {
                 c.remove_schedule("Task-5");
                 REQUIRE(c.count() == 4);
+            }
+        }
+    }
+}
+
+SCENARIO("Testing CRON-Tick Performance")
+{
+    GIVEN("A Cron instance with no task")
+    {
+        using namespace std::chrono_literals;
+        using clock = std::chrono::high_resolution_clock;
+        using std::chrono::milliseconds;
+        using std::chrono::duration_cast;
+
+        Cron<TestClock> c1{};
+        auto& cron_clock1 = c1.get_clock();
+        
+        Cron<TestClock> c2{};
+        auto& cron_clock2 = c2.get_clock();
+
+        Cron<TestClock> c3{};
+        auto& cron_clock3 = c3.get_clock();
+        
+        int count1 = 0;
+        int count2 = 0;
+        int count3 = 0;
+
+        WHEN("Creating 1000 CronData Objects")
+        {
+            std::string cron_job = "* * * * * ?";
+            auto begin_cron_data = clock::now();
+            for(int i = 1; i <= 1000; i++)
+            {
+                auto cron = CronData::create(cron_job);
+            }
+            auto end_cron_data = clock::now();
+            auto msec_cron_data = duration_cast<milliseconds>(end_cron_data - begin_cron_data);
+            
+            // Hopefully Creating a lot of Cron Objects does not take more than a second
+            REQUIRE(msec_cron_data <= 1000ms);
+        }
+        WHEN("Adding 1000 Tasks where with an invalid CRON-String with std::map<std::string, std::string>")
+        {
+            std::map<std::string, std::string> name_schedule_map;
+            for(int i = 1; i <= 1000; i++)
+            {
+                name_schedule_map["Task-" + std::to_string(i)] = "* * * * * ?";
+            }
+            name_schedule_map["Task-1000"] = "invalid";
+
+            auto res = c1.add_schedule(name_schedule_map,
+                                    [](auto&) { });
+
+            REQUIRE_FALSE(std::get<0>(res));
+            REQUIRE(std::get<1>(res) == "Task-1000");
+            REQUIRE(std::get<2>(res) == "invalid");
+        }
+        WHEN("Adding a std::vector<std::tuple<std::string, std::string>>")
+        {
+            std::vector<std::tuple<std::string, std::string>> name_schedule_map;
+            for(int i = 1; i <= 1000; i++)
+            {
+                name_schedule_map.push_back(std::make_tuple("Task-" + std::to_string(i), "* * * * * ?"));
+            }
+
+            auto res = c1.add_schedule(name_schedule_map,
+                                    [](auto&) { });
+
+            REQUIRE(std::get<0>(res));
+        }
+        WHEN("Adding a std::vector<std::pair<std::string, std::string>>")
+        {
+            std::vector<std::pair<std::string, std::string>> name_schedule_map;
+            for(int i = 1; i <= 1000; i++)
+            {
+                name_schedule_map.push_back(std::make_pair("Task-" + std::to_string(i), "* * * * * ?"));
+            }
+
+            auto res = c1.add_schedule(name_schedule_map,
+                                    [](auto&) { });
+
+            REQUIRE(std::get<0>(res));
+        }
+        WHEN("Adding a std::unordered_map<std::string, std::string>")
+        {
+            std::unordered_map<std::string, std::string> name_schedule_map;
+            for(int i = 1; i <= 1000; i++)
+            {
+                name_schedule_map["Task-" + std::to_string(i)] = "* * * * * ?";
+            }
+            auto res = c1.add_schedule(name_schedule_map,
+                                    [](auto&) { });
+
+            REQUIRE(std::get<0>(res));
+        }
+        WHEN("Adding 1000 Tasks to two Cron-Objects expiring after 1 second calling add_schedule")
+        {
+            auto begin_add_sequential = clock::now();
+            for(int i = 1; i <= 1000; i++)
+            {
+                REQUIRE(c1.add_schedule("Task-" + std::to_string(i), "* * * * * ?",
+                                    [&count1](auto&)
+                                    {
+                                        count1++;
+                                    })
+                );
+                REQUIRE(c2.add_schedule("Task-" + std::to_string(i), "* * * * * ?",
+                                    [&count2](auto&)
+                                    {
+                                        count2++;
+                                    })
+                );                
+            }
+            auto end_add_sequential = clock::now();
+
+            std::map<std::string, std::string> name_schedule_map{};
+            for(int i = 1; i <= 1000; i++)
+            {
+                name_schedule_map["Task-" + std::to_string(i)] = "* * * * * ?";
+            }
+
+            auto begin_add_batch = clock::now();
+            REQUIRE(std::get<0>(c3.add_schedule(name_schedule_map,
+                                            [&count3](auto&)
+                                            { 
+                                                count3++;
+                                            }))
+            );
+            auto end_add_batch = clock::now();
+
+            
+            auto time_sequential = duration_cast<milliseconds>(end_add_sequential - begin_add_sequential)/2;
+            auto time_batch = duration_cast<milliseconds>(end_add_batch - begin_add_batch);
+            
+            // This should hopefully take only a few second?
+            REQUIRE(time_sequential < 10000ms);
+            REQUIRE(time_batch < 5000ms);
+            REQUIRE(time_batch < time_sequential);
+            REQUIRE(c1.count() == 1000);
+            REQUIRE(c2.count() == 1000);
+            REQUIRE(c3.count() == 1000);
+
+            THEN("Execute all Tasks 10 Times")
+            {
+                milliseconds msec1;
+                auto t1 = std::thread([&cron_clock1, &c1, &msec1]() {
+                    auto begin_tick = clock::now();
+                    for(auto i = 0; i < 10; ++i)
+                    {
+                        cron_clock1.add(std::chrono::seconds{1});
+                        c1.tick();
+                    }   
+
+                    auto end_tick = clock::now();
+                    msec1 = duration_cast<milliseconds>(end_tick - begin_tick)/10;
+                });
+
+                milliseconds msec2;
+                auto t2 = std::thread([&cron_clock2, &c2, &msec2]() {
+                    auto begin_tick = clock::now();
+                    for(auto i = 0; i < 10; ++i)
+                    {
+                        cron_clock2.add(std::chrono::seconds{1});
+                        c2.tick();
+                    }   
+
+                    auto end_tick = clock::now();
+                    msec2 = duration_cast<milliseconds>(end_tick - begin_tick)/10;
+                });
+
+                milliseconds msec3;
+                auto t3 = std::thread([&cron_clock3, &c3, &msec3]() {
+                    auto begin_tick = clock::now();
+                    for(auto i = 0; i < 10; ++i)
+                    {
+                        cron_clock3.add(std::chrono::seconds{1});
+                        c3.tick();
+                    }   
+
+                    auto end_tick = clock::now();
+                    msec3 = duration_cast<milliseconds>(end_tick - begin_tick)/10;
+                });
+
+                t1.join();
+                t2.join();
+                t3.join();
+
+                REQUIRE(count1 == 10000);
+                REQUIRE(count2 == 10000);
+                REQUIRE(count3 == 10000);
+
+                // Hopefully executing a more or less empty task does only take some milliseconds
+                REQUIRE(msec1 <= 10ms);
+                REQUIRE(msec2 <= 10ms);
+                REQUIRE(msec3 <= 10ms);
             }
         }
     }

@@ -23,6 +23,8 @@ while(true)
 }
 ```
 
+In case there is a lot of time between you call `add_schedule` and `tick`, you can call `recalculate_schedule`.
+
 The callback must have the following signature:
 
 ```
@@ -43,6 +45,46 @@ cron.add_schedule("Hello from Cron", "* * * * * ?", [=](auto& i) {
 		std::cout << "The Task was executed too late..." << std::endl;
 	}
 });
+```
+
+- `libcron::TaskInformation::get_name` gives you the name of the current Task. This allows to add attach the same callback to multiple schedules:
+
+```
+libcron::Cron cron;
+
+auto f = [](auto& i) {
+	if (i.get_name() == "Task 1")
+  {
+  	do_work_task_1();
+  }
+  else if (i.get_name() == "Task 2")
+  {
+  	do_work_task_2();
+  }
+};
+
+cron.add_schedule("Task 1", "* * * * * ?", f);
+cron.add_schedule("Task 2", "* * * * * ?", f);
+```
+
+## Adding multiple tasks with individual schedules at once
+
+libcron::cron::add_schedule needs to sort the underlying container each time you add a schedule. To improve performance when adding many tasks by only sorting once, there is a convinient way to pass either a `std::map<std::string, std::string>`, a `std::vector<std::pair<std::string, std::string>>`, a `std::vector<std::tuple<std::string, std::string>>` or a `std::unordered_map<std::string, std::string>` to `add_schedule`, where the first element corresponds to the task name and the second element to the task schedule. Only if all schedules in the container are valid, they will be added to `libcron::Cron`. The return type is a `std::tuple<bool, std::string, std::string>`, where the boolean is `true` if the schedules have been added or false otherwise. If the schedules have not been added, the second element in the tuple corresponds to the task-name with the given invalid schedule. If there are multiple invalid schedules in the container, `add_schedule` will abort at the first invalid element: 
+
+```
+std::map<std::string, std::string> name_schedule_map;
+for(int i = 1; i <= 1000; i++)
+{
+	name_schedule_map["Task-" + std::to_string(i)] = "* * * * * ?";
+}
+name_schedule_map["Task-1000"] = "invalid";
+auto res = c1.add_schedule(name_schedule_map, [](auto&) { });
+if (std::get<0>(res) == false)
+{
+	std::cout << "Task " << std::get<1>(res) 
+						<< "has an invalid schedule: " 
+						<< std::get<2>(res) << std::endl;
+}
 ```
 
 

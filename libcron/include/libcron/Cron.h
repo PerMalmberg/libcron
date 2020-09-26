@@ -2,11 +2,14 @@
 
 #include <string>
 #include <chrono>
-#include <queue>
 #include <memory>
 #include <mutex>
+#include <map>
+#include <unordered_map>
+#include <vector>
 #include "Task.h"
 #include "CronClock.h"
+#include "TaskQueue.h"
 
 namespace libcron
 {
@@ -32,11 +35,16 @@ namespace libcron
     template<typename ClockType, typename LockType>
     std::ostream& operator<<(std::ostream& stream, const Cron<ClockType, LockType>& c);
 
-    template<typename ClockType = libcron::LocalClock, typename LockType = libcron::NullLock>
+    template<typename ClockType = libcron::LocalClock, 
+             typename LockType = libcron::NullLock>
     class Cron
     {
         public:
             bool add_schedule(std::string name, const std::string& schedule, Task::TaskFunction work);
+            
+            template<typename Schedules = std::map<std::string, std::string>>
+            std::tuple<bool, std::string, std::string>
+            add_schedule(const Schedules& name_schedule_map, Task::TaskFunction work);
             void clear_schedules();
             void remove_schedule(const std::string& name);
 
@@ -63,75 +71,23 @@ namespace libcron
                 return clock;
             }
 
+            void recalculate_schedule()
+            {
+                for (auto& t : tasks.get_tasks())
+                {
+                    using namespace std::chrono_literals;
+                    // Ensure that next schedule is in the future
+                    t.calculate_next(clock.now() + 1s);
+                }
+            }
+
             void get_time_until_expiry_for_tasks(
                     std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status) const;
 
             friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType, LockType>& c);
 
         private:
-            class Queue
-                    // Priority queue placing smallest (i.e. nearest in time) items on top.
-                    : public std::priority_queue<Task, std::vector<Task>, std::greater<>>
-            {
-                public:
-                    // Inherit to allow access to the container.
-                    const std::vector<Task>& get_tasks() const
-                    {
-                        return c;
-                    }
-
-                    std::vector<Task>& get_tasks()
-                    {
-                        return c;
-                    }
-
-                    void clear()
-                    {
-                        lock.lock();
-
-                        while (!empty())
-                            pop();
-
-                        lock.unlock();
-                    }
-
-                    template<typename T>
-                    void remove(T to_remove)
-                    {
-                        lock.lock();
-
-                        /* Copy current elements */
-                        std::vector<Task> temp{};
-                        std::swap(temp, c);
-
-                        /* Refill with elements ensuring correct order by calling push */
-                        for (const auto& task : temp)
-                        {
-                            if (task != to_remove)
-                                push(task);
-                        }
-
-                        lock.unlock();
-                    }
-
-                    void lock_queue()
-                    {
-                        /* Do not allow to manipulate the Queue */
-                        lock.lock();
-                    }
-
-                    void release_queue()
-                    {
-                        /* Allow Access to the Queue Manipulating-Functions */
-                        lock.unlock();
-                    }
-                    
-                private:
-                    LockType lock;
-            };
-
-
-            Queue tasks{};
+            TaskQueue<LockType> tasks{};
             ClockType clock{};
             bool first_tick = true;
             std::chrono::system_clock::time_point last_tick{};
@@ -149,10 +105,55 @@ namespace libcron
             if (t.calculate_next(clock.now()))
             {
                 tasks.push(t);
+                tasks.sort();
             }
             tasks.release_queue();
         }
 
+        return res;
+    }
+
+    template<typename ClockType, typename LockType>
+    template<typename Schedules>
+    std::tuple<bool, std::string, std::string>
+    Cron<ClockType, LockType>::add_schedule(const Schedules& name_schedule_map, Task::TaskFunction work)
+    {
+        bool is_valid = true;
+        std::tuple<bool, std::string, std::string> res{false, "", ""};
+
+        std::vector<Task> tasks_to_add;
+        tasks_to_add.reserve(name_schedule_map.size());
+
+        for (auto it = name_schedule_map.begin(); is_valid && it != name_schedule_map.end(); ++it)
+        {
+            const auto& [name, schedule] = *it;
+            auto cron = CronData::create(schedule);
+            is_valid = cron.is_valid();
+            if (is_valid)
+            {
+                Task t{std::move(name), CronSchedule{cron}, work };
+                if (t.calculate_next(clock.now()))
+                {
+                    tasks_to_add.push_back(std::move(t));
+                }
+            }
+            else 
+            {
+                std::get<1>(res) = name;
+                std::get<2>(res) = schedule;
+            }
+        }
+
+        // Only add tasks and sort once if all elements in the map where valid
+        if (is_valid && tasks_to_add.size() > 0)
+        {
+            tasks.lock_queue();
+            tasks.push(tasks_to_add);
+            tasks.sort();
+            tasks.release_queue();
+        }
+
+        std::get<0>(res) = is_valid;
         return res;
     }
 
@@ -241,30 +242,31 @@ namespace libcron
 
         last_tick = now;
 
-        std::vector<Task> executed{};
-
-        while (!tasks.empty()
-               && tasks.top().is_expired(now))
+        if (!tasks.empty())
         {
-            executed.push_back(tasks.top());
-            tasks.pop();
-            auto& t = executed[executed.size() - 1];
-            t.execute(now);
-        }
-
-        res = executed.size();
-
-        // Place executed tasks back onto the priority queue.
-        std::for_each(executed.begin(), executed.end(), [this, &now](Task& task)
-        {
-            // Must calculate new schedules using second after 'now', otherwise
-            // we'll run the same task over and over if it takes less than 1s to execute.
-            using namespace std::chrono_literals;
-            if (task.calculate_next(now + 1s))
+            for (size_t i = 0; i < tasks.size(); i++)
             {
-                tasks.push(task);
+                if (tasks.at(i).is_expired(now))
+                {
+                    auto& t = tasks.at(i);
+                    t.execute(now);
+
+                    using namespace std::chrono_literals;
+                    if (!t.calculate_next(now + 1s))
+                    {
+                        tasks.remove(t);
+                    }
+
+                    res++;
+                }
             }
-        });
+
+            // Only sort if at least one task was executed
+            if (res > 0)
+            {
+                tasks.sort();
+            }
+        }
 
         tasks.release_queue();
         return res;

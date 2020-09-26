@@ -4,6 +4,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <libcron/TimeTypes.h>
 
 namespace libcron
@@ -126,6 +127,7 @@ namespace libcron
 
             static const std::vector<std::string> month_names;
             static const std::vector<std::string> day_names;
+            static std::unordered_map<std::string, CronData> cache;
 
             template<typename T>
             void add_full_range(std::set<T>& set);

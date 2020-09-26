@@ -3,8 +3,15 @@ project(libcron)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Deactivate Iterator-Debugging on Windows
+option(LIBCRON_DEACTIVATE_ITERATOR_DEBUGGING "Build with iterator-debugging (MSVC only)." OFF)
+
 if( MSVC )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+	
+	if (LIBCRON_DEACTIVATE_ITERATOR_DEBUGGING)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_HAS_ITERATOR_DEBUGGING=0")
+	endif()
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 endif()
