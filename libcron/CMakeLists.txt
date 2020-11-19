@@ -35,6 +35,11 @@ target_include_directories(${PROJECT_NAME}
 		PRIVATE ${CMAKE_CURRENT_LIST_DIR}/externals/date/include
 		PUBLIC include)
 
+if(NOT MSVC)
+	# Assume a modern compiler (gcc 9.3)
+	target_compile_definitions (${PROJECT_NAME} PRIVATE -DHAS_UNCAUGHT_EXCEPTIONS)
+endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_BUILD_TYPE}"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_BUILD_TYPE}"

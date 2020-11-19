@@ -29,7 +29,14 @@ add_executable(
 	CronScheduleTest.cpp
 	CronTest.cpp)
 
-target_link_libraries(${PROJECT_NAME} libcron)
+if(NOT MSVC)
+	target_link_libraries(${PROJECT_NAME} libcron pthread)
+
+	# Assume a modern compiler supporting uncaught_exceptions()
+	target_compile_definitions (${PROJECT_NAME} PRIVATE -DHAS_UNCAUGHT_EXCEPTIONS)
+else()
+	target_link_libraries(${PROJECT_NAME} libcron)
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"
