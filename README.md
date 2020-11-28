@@ -6,10 +6,10 @@ A C++ scheduling library using cron formatting.
 Libcron offers an easy to use API to add callbacks with corresponding cron-formatted strings:
 
 ```
-libcron::Cron cron;
+libcron::Cron<> cron;
 
 cron.add_schedule("Hello from Cron", "* * * * * ?", [=](auto&) {
-	std::cout << "Hello from libcron!" std::endl;
+	std::cout << "Hello from libcron!" << std::endl;
 });
 ```
 
@@ -36,7 +36,7 @@ std::function<void(const libcron::TaskInformation&)>
 - `libcron::TaskInformation::get_delay` informs about the delay between planned and actual execution of the callback. Hence, it is possible to ensure that a task was executed within a specific tolerance:
 
 ```
-libcron::Cron cron;
+libcron::Cron<> cron;
 
 cron.add_schedule("Hello from Cron", "* * * * * ?", [=](auto& i) {
 	using namespace std::chrono_literals;
@@ -50,7 +50,7 @@ cron.add_schedule("Hello from Cron", "* * * * * ?", [=](auto& i) {
 - `libcron::TaskInformation::get_name` gives you the name of the current Task. This allows to add attach the same callback to multiple schedules:
 
 ```
-libcron::Cron cron;
+libcron::Cron<> cron;
 
 auto f = [](auto& i) {
 	if (i.get_name() == "Task 1")
