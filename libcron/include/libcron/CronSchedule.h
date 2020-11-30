@@ -2,12 +2,12 @@
 
 #include "libcron/CronData.h"
 #include <chrono>
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable:4244)
 #endif
 #include <date/date.h>
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 
