@@ -17,7 +17,7 @@ else()
 endif()
 
 include_directories(
-        ${CMAKE_CURRENT_LIST_DIR}/externals/Catch2/single_include/
+        ${CMAKE_CURRENT_LIST_DIR}/externals/Catch2/single_include/catch2
         ${CMAKE_CURRENT_LIST_DIR}/../libcron/externals/date/include
         ${CMAKE_CURRENT_LIST_DIR}/..
 )
