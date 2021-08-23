@@ -1,3 +1,6 @@
 [submodule "libcron/externals/date"]
 	path = libcron/externals/date
 	url = https://github.com/HowardHinnant/date.git
+[submodule "test/externals/Catch2"]
+	path = test/externals/Catch2
+	url = https://github.com/catchorg/Catch2.git
