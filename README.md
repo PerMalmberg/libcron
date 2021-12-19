@@ -183,6 +183,17 @@ Each part is separated by one or more whitespaces. It is thus important to keep 
 `Day of month` and `day of week` are mutually exclusive so one of them must at always be ignored using
 the '?'-character to ensure that it is not possible to specify a statement which results in an impossible mix of these fields. 
 
+## Convenience scheduling
+
+These special time specification "nicknames" which replace the 5 initial time and date fields, and are prefixed with the '@' character, are supported:
+
+@yearly    :    Run once a year, ie.  "0 0 1 1 *".
+@annually  :    Run once a year, ie.  "0 0 1 1 *".
+@monthly   :    Run once a month, ie. "0 0 1 * *".
+@weekly    :    Run once a week, ie.  "0 0 * * 0".
+@daily     :    Run once a day, ie.   "0 0 * * *".
+@hourly    :    Run once an hour, ie. "0 * * * *".
+
 ## Examples
 
 |Expression | Meaning
@@ -191,6 +202,7 @@ the '?'-character to ensure that it is not possible to specify a statement which
 | 0 0 12 * * MON-FRI | Every Weekday at noon
 | 0 0 12 1/2 * ?	| Every 2 days, starting on the 1st at noon
 | 0 0 */12 ? * * | Every twelve hours
+| @hourly | Every hour
 
 # Randomization
 
