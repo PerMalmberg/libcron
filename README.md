@@ -183,17 +183,6 @@ Each part is separated by one or more whitespaces. It is thus important to keep 
 `Day of month` and `day of week` are mutually exclusive so one of them must at always be ignored using
 the '?'-character to ensure that it is not possible to specify a statement which results in an impossible mix of these fields. 
 
-## Convenience scheduling
-
-These special time specification "nicknames" which replace the 5 initial time and date fields, and are prefixed with the '@' character, are supported:
-
-@yearly    :    Run once a year, ie.  "0 0 1 1 *".
-@annually  :    Run once a year, ie.  "0 0 1 1 *".
-@monthly   :    Run once a month, ie. "0 0 1 * *".
-@weekly    :    Run once a week, ie.  "0 0 * * 0".
-@daily     :    Run once a day, ie.   "0 0 * * *".
-@hourly    :    Run once an hour, ie. "0 * * * *".
-
 ## Examples
 
 |Expression | Meaning
@@ -204,6 +193,19 @@ These special time specification "nicknames" which replace the 5 initial time an
 | 0 0 */12 ? * * | Every twelve hours
 | @hourly | Every hour
 
+## Convenience scheduling
+
+These special time specification tokens which replace the 5 initial time and date fields, and are prefixed with the '@' character, are supported:
+
+|Token|Meaning
+| --- | --- |
+| @yearly | Run once a year, ie.  "0 0 1 1 *".
+| @annually | Run once a year, ie.  "0 0 1 1 *".
+| @monthly | Run once a month, ie. "0 0 1 * *".
+| @weekly | Run once a week, ie.  "0 0 * * 0".
+| @daily | Run once a day, ie.   "0 0 * * *".
+| @hourly | Run once an hour, ie. "0 * * * *".
+	
 # Randomization
 
 The standard cron format does not allow for randomization, but with the use of `CronRandomization` you can generate random
