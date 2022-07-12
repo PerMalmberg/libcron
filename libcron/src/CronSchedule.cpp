@@ -81,6 +81,8 @@ namespace libcron
             }
         }
 
+        curr -= curr.time_since_epoch() % seconds{1};
+
         return std::make_tuple(max_iterations > 0, curr);
     }
 }
