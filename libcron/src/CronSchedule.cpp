@@ -81,6 +81,16 @@ namespace libcron
             }
         }
 
+        // Discard fraction seconds in the calculated schedule time
+        //  that may leftover from the argument `from`, which in turn comes from `now()`.
+        // Fraction seconds will potentially make the task be triggered more than 1 second late
+        //  if the `tick()` within the same second is earlier than schedule time,
+        //  in that the task will not trigger until the next `tick()` next second.
+        // By discarding fraction seconds in the scheduled time,
+        //  the `tick()` within the same second will never be earlier than schedule time,
+        //  and the task will trigger in that `tick()`.
+        curr -= curr.time_since_epoch() % seconds{1};
+
         return std::make_tuple(max_iterations > 0, curr);
     }
 }
