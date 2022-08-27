@@ -1,0 +1,21 @@
+name: libcron tests
+
+on: [push, pull_request]
+
+jobs:
+  Tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        submodules: true
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make -j4
+    - name: Test
+      run: |
+        cd test/out
+        ./cron_test
