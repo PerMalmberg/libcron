@@ -3,7 +3,7 @@ name: libcron tests
 on: [push, pull_request]
 
 jobs:
-  CI_host:
+  Tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -13,7 +13,8 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake --build ..
+        cmake ..
+        make -j4
     - name: Test
       run: |
         cd test/out
