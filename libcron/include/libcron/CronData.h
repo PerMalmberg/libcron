@@ -21,6 +21,8 @@ namespace libcron
 
             CronData(const CronData&) = default;
 
+            CronData& operator=(const CronData&) = default;
+
             bool is_valid() const
             {
                 return valid;
