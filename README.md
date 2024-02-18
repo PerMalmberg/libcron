@@ -131,6 +131,34 @@ This library uses `std::chrono::system_clock::timepoint` as its time unit. While
 uses a `LocalClock` by default which offsets `system_clock::now()` by the current UTC-offset. If you wish to work in
 UTC, then construct the Cron instance, passing it a `libcron::UTCClock`.  
 
+## TzClock
+
+This library also offers a `libcron::TzClock` as its time unit. Which makes use of the timezone support of date's library.
+With `libcron::TzClock` you can set one of available regions from the iana Timezone database: 
+
+```
+Cron<TzClock> cron;
+if(cron.get_clock().set_time_zone("Africa/Maputo"))
+  std::cout << "Successfully set timezone to: Africa/Maputo \n";
+else
+  std::cout << "Failed to set timezone to:  Africa/Maputo \n";
+```
+
+`libcron::TzClock` behaves like `libcron::UTCClock` if no timezone is set.
+
+If you want to use TzClock you have to set -DLIBCRON_BUILD_TZ_CLOCK=ON when building libcron. TzClock is a fully optional feature
+if you don't enable it, it won't be build at all.
+
+Using TzClock has the following side effects:
+  1. Date requires linkage to `libcurl`
+  2. First time TzClocks timezone lookup will occur it will download the most up to date timezone: "~/Downloads/tzdata" ("%homedrive%\%homepath%\downloads\tzdata" on Windows).
+  3. TzClock uses a `std::mutex` to protect the time zone in multithreaded envoirements.
+  4. This implementation might decrease performance a lot based on point 2 and 3.
+
+[More Info about date-tz](https://howardhinnant.github.io/date/tz.html)
+
+[Available Regions](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+
 # Supported formatting
 
 This implementation supports cron format, as specified below.  
