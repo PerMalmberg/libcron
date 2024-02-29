@@ -38,6 +38,13 @@ else()
 	target_link_libraries(${PROJECT_NAME} libcron)
 endif()
 
+if(LIBCRON_BUILD_TZ_CLOCK)
+	target_link_libraries(${PROJECT_NAME}
+		date-tz
+	)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC -DBUILD_TZ_CLOCK)
+endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/out"

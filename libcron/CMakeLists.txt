@@ -35,6 +35,13 @@ target_include_directories(${PROJECT_NAME}
 		PRIVATE ${CMAKE_CURRENT_LIST_DIR}/externals/date/include
 		PUBLIC include)
 
+if(LIBCRON_BUILD_TZ_CLOCK)
+	target_link_libraries(${PROJECT_NAME} PUBLIC
+		date-tz
+	)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC -DBUILD_TZ_CLOCK)
+endif()
+
 if(NOT MSVC)
 	# Assume a modern compiler (gcc 9.3)
 	target_compile_definitions (${PROJECT_NAME} PRIVATE -DHAS_UNCAUGHT_EXCEPTIONS)

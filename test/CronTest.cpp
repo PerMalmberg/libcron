@@ -448,3 +448,36 @@ SCENARIO("Tasks can be added and removed from the scheduler")
         }
     }
 }
+
+#ifdef BUILD_TZ_CLOCK
+
+SCENARIO("TzClock: Timezone is not set fallback to utc")
+{
+    GIVEN("No timezone")
+    {
+        TzClock tz_clock{};
+        auto now = std::chrono::system_clock::now();
+        REQUIRE(tz_clock.utc_offset(now) == 0s);
+    }
+    GIVEN("A wrong timezone")
+    {
+        TzClock tz_clock{};
+        auto now = std::chrono::system_clock::now();
+        tz_clock.set_time_zone("404Not/Found");
+        REQUIRE(tz_clock.utc_offset(now) == 0s);
+    }
+}
+
+SCENARIO("TzClock: Setting time zone")
+{
+    TzClock tz_clock;
+    GIVEN("Valid time zone")
+    {
+        REQUIRE(tz_clock.set_time_zone("Europe/Berlin"));
+    }
+    GIVEN("Invalid time zone")
+    {
+        REQUIRE_FALSE(tz_clock.set_time_zone("404Not/Found"));
+    }
+}
+#endif
