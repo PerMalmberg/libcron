@@ -36,35 +36,4 @@ namespace libcron
 #endif
 		return offset;
 	}
-
-#ifdef BUILD_TZ_CLOCK
-	bool TzClock::set_time_zone(std::string_view tz_name)
-	{
-		const date::time_zone *new_zone{nullptr};
-
-		try
-		{
-			new_zone = date::locate_zone(tz_name);
-		}
-		catch (std::runtime_error &err)
-		{
-			return false;
-		}
-
-		std::lock_guard<std::mutex> lock(time_zone_mtx);
-		time_zone = new_zone;
-		return true;
-	}
-
-	std::chrono::seconds TzClock::utc_offset(std::chrono::system_clock::time_point now) const
-	{
-		using namespace std::chrono;
-		// If we don't have a timezone we use utc
-		std::lock_guard<std::mutex> lock(time_zone_mtx);
-		if (time_zone)
-			return time_zone->get_info(now).offset;
-		else
-			return 0s;
-	}
-#endif
 }

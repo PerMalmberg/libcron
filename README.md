@@ -149,14 +149,14 @@ else
 If you want to use TzClock you have to set -DLIBCRON_BUILD_TZ_CLOCK=ON when building libcron. TzClock is a fully optional feature
 if you don't enable it, it won't be build at all.
 
-Using TzClock has the following side effects:
-  1. Date requires linkage to `libcurl`
-  2. First time TzClocks timezone lookup will occur it will download the most up to date timezone: "~/Downloads/tzdata" ("%homedrive%\%homepath%\downloads\tzdata" on Windows).
-  3. TzClock uses a `std::mutex` to protect the time zone in multithreaded envoirements.
-  4. This implementation might decrease performance a lot based on point 2 and 3.
+By default when setting the time zone with `TzClock::set_time_zone`, date-tz will automatically download the neweset database version from [Time Zones](https://www.iana.org/time-zones).
+This can be disabled with `-DLIBCRON_MANUAL_TZ_DB=ON`. If this is set user will be responsible of downloading timezone database.
+
+Setting database path / install path can be done with `date::set_install`. If not set path will default to: "~/Downloads/tzdata" ("%homedrive%\%homepath%\downloads\tzdata" on Windows).
+Using TzClock without LIBCRON_MANUAL_TZ_DB requires liburl installed in your system. On Windows it will also require 7-Zip installed into the default location.
+TzClock by default protects it's time_zone with a `std::mutex` this can be disabled by setting LockType to libcron::NullLock.
 
 [More Info about date-tz](https://howardhinnant.github.io/date/tz.html)
-
 [Available Regions](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 
 # Supported formatting

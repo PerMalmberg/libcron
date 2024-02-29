@@ -45,6 +45,7 @@ namespace libcron
     };
 
 #ifdef BUILD_TZ_CLOCK
+    template<typename LockType = std::mutex>
     class TzClock : public ICronClock
     {
         public:
@@ -54,10 +55,34 @@ namespace libcron
                 return now + utc_offset(now);
             }
 
-            bool set_time_zone(std::string_view tz_name);
-            std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) const override;
+            std::chrono::seconds utc_offset(std::chrono::system_clock::time_point now) const override
+            {
+                // If we don't have a timezone we use utc
+                using namespace std::chrono;
+                std::lock_guard<LockType> lock(time_zone_mtx);
+                if (time_zone)
+                    return time_zone->get_info(now).offset;
+                else
+                    return 0s;
+            }
+
+            bool set_time_zone(std::string_view tz_name)
+            {
+                const date::time_zone *new_zone{nullptr};
+                try
+                {
+                    new_zone = date::locate_zone(tz_name);
+                }
+                catch (std::runtime_error &err)
+                {
+                    return false;
+                }
+                std::lock_guard<LockType> lock(time_zone_mtx);
+                time_zone = new_zone;
+                return true;
+            }
         private:
-            mutable std::mutex time_zone_mtx{};
+            mutable LockType time_zone_mtx{};
             const date::time_zone* time_zone{nullptr};
     };
 #endif
