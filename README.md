@@ -188,10 +188,15 @@ the '?'-character to ensure that it is not possible to specify a statement which
 |Expression | Meaning
 | --- | --- |
 | * * * * * ? | Every second
+| 0 * * * * ? | Every minute
 | 0 0 12 * * MON-FRI | Every Weekday at noon
 | 0 0 12 1/2 * ?	| Every 2 days, starting on the 1st at noon
 | 0 0 */12 ? * * | Every twelve hours
 | @hourly | Every hour
+
+Note that the expression formatting has a part for seconds and the day of week. 
+For the day of week part, a question mark ? is utilized. This format
+may not be parsed by all online crontab calculators or expression generators.
 
 ## Convenience scheduling
 
