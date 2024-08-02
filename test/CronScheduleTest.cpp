@@ -184,7 +184,7 @@ SCENARIO("Examples from README.md")
                          DT(2018_y / 03 / 1, hours{12}, minutes{13}, seconds{48})
                  }));
 
-    REQUIRE(test("0 * * * * ?", DT(2018_y / 03 / 1, hours{ 12 }, minutes{ 0 }, seconds{ 0 }),
+    REQUIRE(test("0 * * * * ?", DT(2018_y / 03 / 1, hours{ 12 }, minutes{ 0 }, seconds{ 10 }),
         {
                 DT(2018_y / 03 / 1, hours{12}, minutes{1}, seconds{0}),
                 DT(2018_y / 03 / 1, hours{12}, minutes{2}, seconds{0}),
