@@ -6,10 +6,16 @@ A C++ scheduling library using cron formatting.
 Libcron offers an easy to use API to add callbacks with corresponding cron-formatted strings:
 
 ```
+#include <libcron/Cron.h>
+#include <libcron/CronData.h>
+#include <chrono>
+#include <thread>
+using namespace std::chrono_literals;
+
 libcron::Cron cron;
 
 cron.add_schedule("Hello from Cron", "* * * * * ?", [=](auto&) {
-	std::cout << "Hello from libcron!" std::endl;
+	std::cout << "Hello from libcron!" << std::endl;
 });
 ```
 
@@ -19,7 +25,7 @@ To trigger the execution of callbacks, one must call `libcron::Cron::tick` at le
 while(true)
 {
 	cron.tick();
-	std::this_thread::sleep_for(500mS);
+	std::this_thread::sleep_for(500ms);
 }
 ```
 
