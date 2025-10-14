@@ -32,7 +32,7 @@ add_library(${PROJECT_NAME}
 		src/Task.cpp)
 
 target_include_directories(${PROJECT_NAME}
-		PRIVATE ${CMAKE_CURRENT_LIST_DIR}/externals/date/include
+		PUBLIC ${CMAKE_CURRENT_LIST_DIR}/externals/date/include
 		PUBLIC include)
 
 if(NOT MSVC)
